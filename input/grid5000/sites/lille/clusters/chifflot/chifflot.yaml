@@ -88,16 +88,40 @@ nodes:
         storage: HDD
         reservation: true
   chifflot-[1-6]:
-    gpu:
-      gpu: true
-      gpu_count: 2
-      gpu_cores: 7168
-      gpu_vendor: Nvidia
-      gpu_model: Tesla P100
+    gpu_distribution: "round-robin" # can be: round-robin | continuous
+    gpu_devices:
+      nvidia0:
+        cpu_affinity: 0
+        device: "/dev/nvidia0"
+        memory: 16280000000
+        model: Tesla P100-PCIE-16GB
+        power_default_limit: 250.00 W
+        vbios_version: 86.00.4D.00.01
+        vendor: Nvidia
+      nvidia1:
+        cpu_affinity: 1
+        device: "/dev/nvidia1"
+        memory: 16280000000
+        model: Tesla P100-PCIE-16GB
+        power_default_limit: 250.00 W
+        vbios_version: 86.00.4D.00.01
+        vendor: Nvidia
   chifflot-[7-8]:
-    gpu:
-      gpu: true
-      gpu_count: 2
-      gpu_cores: 10240
-      gpu_vendor: Nvidia
-      gpu_model: Tesla V100
+    gpu_distribution: "round-robin" # can be: round-robin | continuous
+    gpu_devices:
+      nvidia0:
+        cpu_affinity: 0
+        device: "/dev/nvidia0"
+        memory: 32510000000
+        model: Tesla V100-PCIE-32GB
+        power_default_limit: 250.00 W
+        vbios_version: 88.00.48.00.02
+        vendor: Nvidia
+      nvidia1:
+        cpu_affinity: 1
+        device: "/dev/nvidia1"
+        memory: 32510000000
+        model: Tesla V100-PCIE-32GB
+        power_default_limit: 250.00 W
+        vbios_version: 88.00.48.00.02
+        vendor: Nvidia

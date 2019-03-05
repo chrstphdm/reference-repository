@@ -75,20 +75,46 @@ nodes:
     supported_job_types:
       max_walltime: 604800
 
+
+
   graphique-1:
-    gpu:
-        gpu: true
-        gpu_count: 2
-        gpu_cores: 5760
-        gpu_vendor: Nvidia
-        gpu_model: Titan Black
+    gpu_distribution: "round-robin" # can be: round-robin | continuous
+    gpu_devices:
+      nvidia0:
+        cpu_affinity: 0
+        device: "/dev/nvidia0"
+        memory: 6083000000
+        model: GeForce GTX TITAN Black
+        power_default_limit: 250.00 W
+        vbios_version: 80.80.4E.00.90
+        vendor: Nvidia
+      nvidia1:
+        cpu_affinity: 1
+        device: "/dev/nvidia1"
+        memory: 6083000000
+        model: GeForce GTX TITAN Black
+        power_default_limit: 250.00 W
+        vbios_version: 80.80.4E.00.90
+        vendor: Nvidia
     supported_job_types:
       max_walltime: 86400
 
   graphique-[2-6]:
-    gpu:
-        gpu: true
-        gpu_count: 2
-        gpu_cores: 4096
-        gpu_vendor: Nvidia
-        gpu_model: GTX 980
+    gpu_distribution: "round-robin" # can be: round-robin | continuous
+    gpu_devices:
+      nvidia0:
+        cpu_affinity: 0
+        device: "/dev/nvidia0"
+        memory: 4043000000
+        model: GeForce GTX 980
+        power_default_limit: 180.00 W
+        vbios_version: 84.04.2F.00.18
+        vendor: Nvidia
+      nvidia1:
+        cpu_affinity: 1
+        device: "/dev/nvidia1"
+        memory: 4043000000
+        model: GeForce GTX 980
+        power_default_limit: 180.00 W
+        vbios_version: 84.04.28.00.07
+        vendor: Nvidia
