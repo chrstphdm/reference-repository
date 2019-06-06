@@ -54,11 +54,15 @@ def generate_create_disk_cmd(host, disk)
 end
 
 def generate_set_node_properties_cmd(host, default_properties)
-  return '' if default_properties.size == 0
-  command  = "echo; echo 'Setting properties for #{host}:'; echo\n"
-  command += "oarnodesetting --sql \"host='#{host}' and type='default'\" -p "
-  command += properties_internal(default_properties)
-  return command + "\n\n"
+  if not default_properties.nil?
+    return '' if default_properties.size == 0
+    command  = "echo; echo 'Setting properties for #{host}:'; echo\n"
+    command += "oarnodesetting --sql \"host='#{host}' and type='default'\" -p "
+    command += properties_internal(default_properties)
+    return command + "\n\n"
+  else
+    return "echo ; echo 'Not setting properties for #{host}: node is not available in ref-api (retired?)'; echo\n\n"
+  end
 end
 
 def generate_set_disk_properties_cmd(host, disk, disk_properties)
