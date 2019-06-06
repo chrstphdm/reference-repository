@@ -593,16 +593,6 @@ def get_oar_data(site_uid, filename, options)
   return oarnodes
 end
 
-# Return a list of properties as a hash: { property1 => String, property2 => Fixnum, ... }
-# We detect the type of the property (Fixnum/String) by looking at the existing values
-def get_property_keys(properties)
-  properties_keys = {}
-  properties.each do |type, type_properties|
-    properties_keys.merge!(get_property_keys_internal(type, type_properties))
-  end
-  return properties_keys
-end
-
 def get_property_keys_internal(_type, type_properties)
   properties_keys = {}
   type_properties.each do |key, node_properties|
