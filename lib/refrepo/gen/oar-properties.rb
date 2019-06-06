@@ -234,13 +234,13 @@ def export_rows_as_oar_command(generated_hierarchy, site_name, site_properties)
           result += "oarnodesetting -a -h '#{host}' -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset} -p gpu=#{gpu} -p gpudevice=#{gpudevice} # This GPU is mapped on #{gpudevicepath}\n"
         end
       else
-          # Update the resource
-          if gpu == ''
-            result += "oarnodesetting --sql \"host='#{host}' AND resource_id='#{resource_id}' AND type='default'\" -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset}\n"
-          else
-            result += "oarnodesetting --sql \"host='#{host}' AND resource_id='#{resource_id}' AND type='default'\" -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset} -p gpu=#{gpu} -p gpudevice=#{gpudevice} # This GPU is mapped on #{gpudevicepath}\n"
-          end
+        # Update the resource
+        if gpu == ''
+          result += "oarnodesetting --sql \"host='#{host}' AND resource_id='#{resource_id}' AND type='default'\" -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset}\n"
+        else
+          result += "oarnodesetting --sql \"host='#{host}' AND resource_id='#{resource_id}' AND type='default'\" -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset} -p gpu=#{gpu} -p gpudevice=#{gpudevice} # This GPU is mapped on #{gpudevicepath}\n"
         end
+      end
     end
 
     # Set the OAR properties of the OAR node
@@ -481,8 +481,7 @@ def properties_internal(properties)
                 v = "YES" if v == true
                 v = "NO"  if v == false
                 !v.nil? ? "#{k}=#{v.inspect.gsub("'", "\\'").gsub("\"", "'")}" : nil
-              end
-            .compact.join(' -p ')
+            end.compact.join(' -p ')
   return str
 end
 
