@@ -125,7 +125,7 @@ namespace :gen do
     exit(ret)
   end
 
-  desc "Generate OAR properties -- parameters: SITE={grenoble,...} CLUSTERS={yeti,...} DO={print,table,update,diff} [VERBOSE={0,1,2,3}] [OAR_SERVER=192.168.37.10] [OAR_SERVER_USER=root] [OAR_API_SERVER=192.168.37.10] [OAR_API_PORT=6668]"
+  desc "Generate OAR properties -- parameters: SITE={grenoble,...} CLUSTERS={yeti,...} DO={print,table,update,diff} [VERBOSE={0,1,2,3}] [OAR_SERVER=192.168.37.10] [OAR_SERVER_USER=root]"
   task "oar-properties" do
     # Manage oar-properties for a given set of Grid'5000 cluster. The task takes the following parameters
     # Params:
@@ -174,14 +174,6 @@ namespace :gen do
     if ENV['OAR_SERVER_USER']
       options[:ssh] ||= {}
       options[:ssh][:user] = ENV['OAR_SERVER_USER']
-    end
-    if ENV['OAR_API_SERVER']
-      options[:api] ||= {}
-      options[:api][:host] = ENV['OAR_API_SERVER']
-    end
-    if ENV['OAR_API_PORT']
-      options[:api] ||= {}
-      options[:api][:port] = ENV['OAR_API_PORT']
     end
     options[:print] = false
     options[:diff] = false

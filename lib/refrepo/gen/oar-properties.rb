@@ -569,29 +569,16 @@ def get_oar_data(site_uid, filename, options)
     puts "Reading OAR resources properties from file #{filename}" if options[:verbose]
     oarnodes = YAML.load(File.open(filename, 'rb') { |f| f.read })
   else
-    if options.key?(:api) and options[:api].key?(:host)
-      host = options[:api][:host]
-      port = 6668
-      if options[:api].key?(:port)
-        port = options[:api][:port]
-      end
-      api_port = port
-      api_uri = URI.parse('http://'+host+':'+port+'/oarapi/resources/details.json?limit=999999')
-    else
-      api_port = Net::HTTP.https_default_port
-      api_uri = URI.parse('https://api.grid5000.fr/stable/sites/' + site_uid + '/internal/oarapi/resources/details.json?limit=999999')
-    end
+    api_uri = URI.parse('https://api.grid5000.fr/stable/sites/' + site_uid  + '/internal/oarapi/resources/details.json?limit=999999')
 
     # Download the OAR properties from the OAR API (through G5K API)
     puts "Downloading resources properties from #{api_uri} ..." if options[:verbose]
-    http = Net::HTTP.new(api_uri.host, api_port)
-    if api_port == Net::HTTP.https_default_port
-      http.use_ssl = true
-    end
+    http = Net::HTTP.new(api_uri.host, Net::HTTP.https_default_port)
+    http.use_ssl = true
     request = Net::HTTP::Get.new(api_uri.request_uri, {'User-Agent' => 'reference-repository/gen/oar-properties'})
 
     # For outside g5k network access
-    if options.key?(:api) and options[:api].key?(:user) and options[:api].key?(:pwd) and options[:api][:user] && options[:api][:pwd]
+    if options[:api][:user] && options[:api][:pwd]
       request.basic_auth(options[:api][:user], options[:api][:pwd])
     end
 
