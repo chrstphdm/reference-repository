@@ -2,7 +2,7 @@
 
 require 'refrepo/hash/hash'
 
-def load_yaml_file_hierarchy(directory = File.expand_path("../../input/grid5000/", File.dirname(__FILE__)), restrict_site: "", restrict_clusters: [])
+def load_yaml_file_hierarchy(directory = File.expand_path("../../input/grid5000/", File.dirname(__FILE__)))
 
   global_hash = {} # the global data structure
   
@@ -12,21 +12,7 @@ def load_yaml_file_hierarchy(directory = File.expand_path("../../input/grid5000/
     # The order in which the results are returned depends on the system (http://ruby-doc.org/core-2.2.3/Dir.html).
     # => List deepest files first as they have lowest priority when hash keys are duplicated.
     list_of_yaml_files = Dir['**/*.y*ml', '**/*.y*ml.erb'].sort_by { |x| -x.count('/') }
-
-    # This block filters YAML files, so that only the required site are considered
-    if restrict_site != ""
-      list_of_yaml_files = list_of_yaml_files.select {|x| x.include?("sites/#{restrict_site}") or not x.include?("sites")}
-    end
-
-    # This block filters YAML files, so that only the required clusters are considered
-    if not restrict_clusters.empty?
-      matching_files = list_of_yaml_files.select {|x| not x.include?("sites")}
-      restrict_clusters.each do |cluster_name|
-        matching_files = matching_files + list_of_yaml_files.select {|x| x.include?("clusters/#{cluster_name}")}
-      end
-      list_of_yaml_files = matching_files
-    end
-
+    
     list_of_yaml_files.each { |filename|
       begin
         # Load YAML

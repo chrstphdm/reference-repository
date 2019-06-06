@@ -1084,6 +1084,7 @@ def generate_oar_properties(options)
   options[:ssh] ||= {}
   options[:ssh][:user] ||= 'g5kadmin'
   options[:ssh][:host] ||= 'oar.%s.g5kadmin'
+  options[:sites] = [options[:site]] # for compatibility with other generators
 
   # This function works as follow:
   # (1) Initialization
@@ -1101,28 +1102,10 @@ def generate_oar_properties(options)
   ############################################
   # Complete options with data from YAML files
   ############################################
-  if options[:site]
-    input_files_hierarchy = load_yaml_file_hierarchy(restrict_site: options[:site])
-  elsif options[:clusters]
-    input_files_hierarchy = load_yaml_file_hierarchy(restrict_clusters: options[:clusters])
-  else
-    input_files_hierarchy = load_yaml_file_hierarchy()
-  end
 
-  site_name = nil
+  input_files_hierarchy = load_yaml_file_hierarchy
 
-  # If no site is given, then find the site according to the given clusters
-  if not options.key? :site
-    input_files_hierarchy['sites'].each do |key_site, value_site|
-      value_site['clusters'].each do |key_cluster, value_cluster|
-        if options[:clusters].include?(key_cluster)
-          site_name = key_site
-        end
-      end
-    end
-  else
-    site_name = options[:site]
-  end
+  site_name = options[:site]
 
   # # Get the list of property keys from the reference-repo (['ref'])
   # global_hash = load_data_hierarchy
