@@ -125,12 +125,11 @@ namespace :gen do
     exit(ret)
   end
 
-  desc "Generate OAR properties -- parameters: SITE={grenoble,...} CLUSTERS={yeti,...} DO={print,table,update,diff} [VERBOSE={0,1,2,3}] [OAR_SERVER=192.168.37.10] [OAR_SERVER_USER=root]"
+  desc "Generate OAR properties -- parameters: SITE=grenoble CLUSTER={yeti,...} DO={print,table,update,diff} [VERBOSE={0,1,2,3}] [OAR_SERVER=192.168.37.10] [OAR_SERVER_USER=g5kadmin]"
   task "oar-properties" do
     # Manage oar-properties for a given set of Grid'5000 cluster. The task takes the following parameters
     # Params:
-    # +SITE+:: Grid'5000 site (Nantes, Nancy, ...). This argument is optional: if a value is provided for the CLUSTERS
-    #     argument is given to the task, it will compute the site from the given clusters.
+    # +SITE+:: Grid'5000 site (Nantes, Nancy, ...).
     # +CLUSTERS+:: a comma separated list of Grid'5000 clusters (econome, ecotype, ...). This argument is optional:
     #     if no clusters is provided, the script will be run on each cluster of the specified site.
     # +Do+:: specify the action to execute:
@@ -153,17 +152,19 @@ namespace :gen do
 
     require 'refrepo/gen/oar-properties'
     options = {}
-    options[:sites] = ( ENV['SITE'] ? ENV['SITE'].split(',') : G5K_SITES )
 
-    if ENV['CLUSTERS']
-      options[:clusters] = ENV['CLUSTERS'].split(',')
+    if ENV['CLUSTER']
+      options[:clusters] = ENV['CLUSTER'].split(',')
     end
     if ENV['SITE']
       options[:site] = ENV['SITE']
+    else
+      puts "You must specify a site."
+      exit(1)
     end
 
-    if options[:site].nil? && options[:clusters].nil?
-      puts "You must specify a site or at least one cluster ('SITE=lille CLUSTERS=chifflet')"
+    if not G5K_SITES.include?(options[:site])
+      puts "Invalid site: #{options[:site]}"
       exit(1)
     end
 
