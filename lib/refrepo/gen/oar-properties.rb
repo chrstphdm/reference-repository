@@ -1090,6 +1090,14 @@ end
 #   - execute these commands on an OAR server
 def generate_oar_properties(options)
 
+  options[:api] ||= {}
+  conf = RefRepo::Utils.get_api_config
+  options[:api][:user] = conf['username']
+  options[:api][:pwd] = conf['password']
+  options[:ssh] ||= {}
+  options[:ssh][:user] ||= 'g5kadmin'
+  options[:ssh][:host] ||= 'oar.%s.g5kadmin'
+
   # This function works as follow:
   # (1) Initialization
   #    (a) Load the local data contained in YAML input files
@@ -1433,14 +1441,6 @@ def generate_oar_properties(options)
   ############################################
   # Output generated information
   ############################################
-
-  options[:api] ||= {}
-  conf = RefRepo::Utils.get_api_config
-  options[:api][:user] = conf['username']
-  options[:api][:pwd] = conf['password']
-  options[:ssh] ||= {}
-  options[:ssh][:user] ||= 'g5kadmin'
-  options[:ssh][:host] ||= 'oar.%s.g5kadmin'
 
   options[:sites] = [site_name]
 
