@@ -1442,30 +1442,3 @@ def generate_oar_properties(options)
 
   return 0
 end
-
-
-if __FILE__ == $PROGRAM_NAME
-  options = {
-      :site => '',
-      :clusters => []
-  }
-
-  OptionParser.new do |opts|
-    opts.banner = 'Usage: [options]'
-
-    opts.separator ''
-
-    opts.separator 'Filters:'
-
-    opts.on('-s', '--site a', String, 'Select site(s)') do |s|
-      options[:site] = s
-    end
-
-    opts.on('-c', '--clusters a,b,c', Array, 'Select clusters(s). Default: none') do |s|
-      options[:clusters] = s
-    end
-
-  end.parse!
-
-  generate_oar_properties(options)
-end
