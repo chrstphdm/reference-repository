@@ -1,9 +1,5 @@
 # coding: utf-8
 
-require 'optparse'
-require 'yaml'
-
-require 'refrepo/gen/reference-api'
 require 'hashdiff'
 require 'refrepo/data_loader'
 require 'net/ssh'
