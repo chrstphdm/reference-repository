@@ -1407,8 +1407,6 @@ def generate_oar_properties(options)
   # Output generated information
   ############################################
 
-  options[:sites] = [site_name]
-
   # DO=table
   if options.key? :table and options[:table]
     export_rows_as_formated_line(generated_hierarchy)
