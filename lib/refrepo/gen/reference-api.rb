@@ -216,10 +216,6 @@ def generate_reference_api
             node["processor"]["cache_l1"] ||= nil
           end
 
-          # Add default keys
-          node["gpu"] = {} unless node.key?("gpu")
-          node["gpu"]["gpu"] ||= false
-
           node["main_memory"] = {} unless node.key?("main_memory")
 
           # Delete keys
