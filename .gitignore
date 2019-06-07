@@ -1,5 +1,6 @@
 .DS_Store
 *.swp
 *~
-dev/run-g5kchecks/output/
-generators/run-g5kchecks/output/
+/dev/run-g5kchecks/output/
+/generators/run-g5kchecks/output/
+/tmp
