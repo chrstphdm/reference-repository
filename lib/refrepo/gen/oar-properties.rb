@@ -1382,8 +1382,7 @@ def generate_oar_properties(options)
               next
             end
 
-            # row[:gpu] = selected_gpu['local_id'] + gpu_current_max_id
-            row[:gpu] = gpu_ids[(node_num - 1) * gpu_count + gpu_idx]
+            row[:gpu] = gpu_ids[(node_num - 1) * gpu_count + selected_gpu['local_id'] - 1]
             row[:gpudevice] = selected_gpu['local_id']
             row[:gpudevicepath] = selected_gpu['device']
             row[:gpumodel] = selected_gpu['model']
