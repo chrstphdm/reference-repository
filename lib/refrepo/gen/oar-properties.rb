@@ -49,7 +49,7 @@ def generate_create_disk_cmd(host, disk)
   disk_exist = "disk_exist '#{host}' '#{disk}'"
   command = "echo; echo 'Adding disk #{disk} on host #{host}:'\n"
   command += "#{disk_exist} && echo '=> disk already exists'\n"
-  command += "#{disk_exist} || oarnodesetting -a -h '' -p host='#{host}' -p network_address='' -p type='disk' -p disk='#{disk}'"
+  command += "#{disk_exist} || oarnodesetting -a -h '' -p host='#{host}' -p type='disk' -p disk='#{disk}'"
   return command + "\n\n"
 end
 
@@ -1016,7 +1016,7 @@ oarnodesetting --sql "resource_id='#{y["id"]}' AND type='default'" -p cpuset=#{r
                   fix_cmds += %Q{
 oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type='default'" -p gpudevice=#{row[:gpudevice]}}
                 end
-                if corresponding_resource[0]["gpu"] != row[:gpu].to_s
+                if corresponding_resource[0]["gpu"].to_s != row[:gpu].to_s
                   puts "ERROR: I computed that GPU ID of resource #{corresponding_resource[0]["id"]} should be #{row[:gpu]} instead of #{corresponding_resource[0]["gpu"]}"
                   fix_cmds += %Q{
 oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type='default'" -p gpu=#{row[:gpu]}}
