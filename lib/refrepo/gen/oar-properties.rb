@@ -70,7 +70,7 @@ def generate_set_disk_properties_cmd(host, disk, disk_properties)
   return '' if disk_properties.size == 0
   command = "echo; echo 'Setting properties for disk #{disk} on host #{host}:'; echo\n"
   command += "oarnodesetting --sql \"host='#{host}' and type='disk' and disk='#{disk}'\" -p "
-  command += properties_internal(disk_properties)
+  command += disk_properties_internal(disk_properties)
   return command + "\n\n"
 end
 
@@ -486,6 +486,18 @@ def properties_internal(properties)
                 v = "NO"  if v == false
                 !v.nil? ? "#{k}=#{v.inspect.gsub("'", "\\'").gsub("\"", "'")}" : nil
             end.compact.join(' -p ')
+  return str
+end
+
+def disk_properties_internal(properties)
+  str = properties
+            .to_a
+            .select{|k, v| not v.nil? and not v==""}
+            .map do |(k, v)|
+    v = "YES" if v == true
+    v = "NO"  if v == false
+    !v.nil? ? "#{k}=#{v.inspect.gsub("'", "\\'").gsub("\"", "'")}" : nil
+  end.compact.join(' -p ')
   return str
 end
 
