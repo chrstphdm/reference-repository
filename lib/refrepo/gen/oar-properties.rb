@@ -1164,6 +1164,11 @@ def generate_oar_properties(options)
   current_max_core_id = site_resources.length > 0 ? site_resources.map{|r| r["core"]}.max : 0
   current_max_gpu_id = site_resources.length > 0 ? site_resources.map{|r| r["gpu"]}.select{|x| not x.nil?}.max : 0
 
+  # Some existing cluster have GPUs, but no GPU ID has been allocated to them
+  if current_max_gpu_id.nil?
+    current_max_gpu_id = 1
+  end
+
   # Iterate over clusters
   clusters.each do |cluster_name|
 
@@ -1286,8 +1291,19 @@ def generate_oar_properties(options)
       unallocated_gpus = (1..current_max_gpu_id)
                               .select{|gpu_id| not site_allocated_gpus_ids.include?(gpu_id)}
                               .select{|gpu_id| not will_soon_be_allocated_gpus.include?(gpu_id)}
-      will_soon_be_allocated_gpus += unallocated_gpus[0..missing_gpus_count]
-      gpu_ids = (gpu_ids + unallocated_gpus[0..missing_gpus_count])
+      selected_unallocated_gpus = unallocated_gpus[0..missing_gpus_count]
+
+      # Fix for existing clusters with GPUs, and not GPU ID allocated to them
+      still_missing_gpus_count = node_count * gpu_count - selected_unallocated_gpus.length + gpu_ids.length
+      if still_missing_gpus_count > 0
+        selected_unallocated_gpus += (0..still_missing_gpus_count - 1)
+                                         .map {|n| current_max_gpu_id + n}
+        current_max_gpu_id = selected_unallocated_gpus.max
+      end
+
+      will_soon_be_allocated_gpus += selected_unallocated_gpus
+
+      gpu_ids = (gpu_ids + selected_unallocated_gpus)
                      .uniq
                      .sort
     end
