@@ -1300,7 +1300,7 @@ def generate_oar_properties(options)
       # Fix for existing clusters with GPUs, and not GPU ID allocated to them
       still_missing_gpus_count = node_count * gpu_count - selected_unallocated_gpus.length + gpu_ids.length
       if still_missing_gpus_count > 0
-        selected_unallocated_gpus += (0..still_missing_gpus_count - 1)
+        selected_unallocated_gpus += (0..still_missing_gpus_count)
                                          .map {|n| current_max_gpu_id + n}
         current_max_gpu_id = selected_unallocated_gpus.max
       end
