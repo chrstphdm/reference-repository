@@ -1320,8 +1320,9 @@ def generate_oar_properties(options)
         gpus = []
       end
 
-      # Assign an ID to each GPU of the node. It will be used for gpuset
-      gpu_idx = 1
+      # Assign an ID to each GPU of the node. It will be used for gpuset.
+      # The "local_id" begins at 0
+      gpu_idx = 0
       gpus.map do |v|
         v[1]['local_id'] = gpu_idx
         gpu_idx += 1
@@ -1394,7 +1395,7 @@ def generate_oar_properties(options)
               next
             end
 
-            row[:gpu] = gpu_ids[(node_num - 1) * gpu_count + selected_gpu['local_id'] - 1]
+            row[:gpu] = gpu_ids[(node_num - 1) * gpu_count + selected_gpu['local_id']]
             row[:gpudevice] = selected_gpu['local_id']
             row[:gpudevicepath] = selected_gpu['device']
             row[:gpumodel] = selected_gpu['model']
