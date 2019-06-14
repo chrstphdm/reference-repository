@@ -160,6 +160,7 @@ property_exist 'cpu' || oarproperty -a cpu
 property_exist 'core' || oarproperty -a core
 property_exist 'gpudevice' || oarproperty -a gpudevice
 property_exist 'gpu' || oarproperty -a gpu
+property_exist 'gpu_model' || oarproperty -a gpu_model --varchar
 
 }
 
@@ -227,6 +228,7 @@ def export_rows_as_oar_command(generated_hierarchy, site_name, site_properties)
       cpuset = oar_ressource_row[:cpuset].to_s
       gpu = oar_ressource_row[:gpu].to_s
       gpudevice = oar_ressource_row[:gpudevice].to_s
+      gpumodel = oar_ressource_row[:gpumodel].to_s
       gpudevicepath = oar_ressource_row[:gpudevicepath].to_s
       resource_id = oar_ressource_row[:resource_id]
 
@@ -235,14 +237,14 @@ def export_rows_as_oar_command(generated_hierarchy, site_name, site_properties)
         if gpu == ''
           result += "oarnodesetting -a -h '#{host}' -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset}\n"
         else
-          result += "oarnodesetting -a -h '#{host}' -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset} -p gpu=#{gpu} -p gpudevice=#{gpudevice} # This GPU is mapped on #{gpudevicepath}\n"
+          result += "oarnodesetting -a -h '#{host}' -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset} -p gpu=#{gpu} -p gpu_model='#{gpumodel}' -p gpudevice=#{gpudevice} # This GPU is mapped on #{gpudevicepath}\n"
         end
       else
         # Update the resource
         if gpu == ''
           result += "oarnodesetting --sql \"host='#{host}' AND resource_id='#{resource_id}' AND type='default'\" -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset}\n"
         else
-          result += "oarnodesetting --sql \"host='#{host}' AND resource_id='#{resource_id}' AND type='default'\" -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset} -p gpu=#{gpu} -p gpudevice=#{gpudevice} # This GPU is mapped on #{gpudevicepath}\n"
+          result += "oarnodesetting --sql \"host='#{host}' AND resource_id='#{resource_id}' AND type='default'\" -p host='#{host}' -p cpu=#{cpu} -p core=#{core} -p cpuset=#{cpuset} -p gpu=#{gpu} -p gpu_model='#{gpumodel}' -p gpudevice=#{gpudevice} # This GPU is mapped on #{gpudevicepath}\n"
         end
       end
     end
@@ -710,6 +712,7 @@ def ignore_default_keys()
     "cpu", # This property was created by 'oar_resources_add'
     "host", # This property was created by 'oar_resources_add'
     "gpudevice", # New property taken into account by the new generator
+    "gpu_model", # New property taken into account by the new generator
     "gpu", # New property taken into account by the new generator
     "cpuset",
     "desktop_computing",
