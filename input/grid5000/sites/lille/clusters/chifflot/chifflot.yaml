@@ -84,3 +84,4 @@ nodes:
         driver: megaraid_sas
         storage: HDD
         reservation: true
+    cpu_distribution: "continuous" # can be: round-robin | continuous
