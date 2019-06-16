@@ -41,7 +41,7 @@ nodes:
         power_default_limit: 250.00 W
         vbios_version: 86.02.39.00.01
         vendor: Nvidia
-    cpu_distribution: "round-robin" # can be: round-robin | continuous
+    cpu_distribution: "continuous" # can be: round-robin | continuous
     monitoring:
       wattmeter: multiple
       metric: power

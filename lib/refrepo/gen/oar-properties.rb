@@ -1170,7 +1170,7 @@ def generate_oar_properties(options)
   end
 
   # Iterate over clusters
-  clusters.each do |cluster_name|
+  clusters.sort.each do |cluster_name|
 
     cpu_current_max_id = 0
     core_current_max_id = 0
@@ -1310,11 +1310,12 @@ def generate_oar_properties(options)
 
     # Detect how cpusets are distributed
     cpuset_attribution_policy = 'round-robin'
+    if first_node.key? "cpu_distribution"
+      cpuset_attribution_policy = first_node["cpu_distribution"]
+    end
+
     # cpuset_attribution_policy = 'continuous'
     if not cluster_numa_description.nil?
-      if cluster_numa_description.key? 'cpu_distribution'
-        cpuset_attribution_policy = cluster_numa_description['cpu_distribution']
-      end
       if cluster_numa_description.key? 'gpu_distribution'
         gpuset_attribution_policy = cluster_numa_description['gpu_distribution']
       end

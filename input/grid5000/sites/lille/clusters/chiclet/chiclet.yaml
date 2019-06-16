@@ -23,6 +23,7 @@ nodes:
     performance:
         core_flops: 12600000000
         node_flops: 380100000000
+    cpu_distribution: "continuous" # can be: round-robin | continuous
     gpu:
       gpu: false
     monitoring:

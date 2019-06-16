@@ -87,6 +87,7 @@ nodes:
         driver: megaraid_sas
         storage: HDD
         reservation: true
+    cpu_distribution: "continuous" # can be: round-robin | continuous
   chifflot-[1-6]:
     gpu_distribution: "round-robin" # can be: round-robin | continuous
     gpu_devices:
