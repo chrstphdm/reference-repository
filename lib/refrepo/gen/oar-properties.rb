@@ -1044,7 +1044,7 @@ oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type=
             end
           end
 
-          # Check that OAR resources are associated with the right cpuset (thread)
+          # Check that OAR resources are associated with the right cpu, core and cpuset
           generated_rows_for_this_cluster.each do |row|
             corresponding_resource = default_cluster_resources.select{|r| r["id"] == row[:resource_id]}
             if corresponding_resource.length > 0
@@ -1083,60 +1083,8 @@ oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type=
   end
 end
 
-############################################
-# MAIN function
-############################################
 
-# This function is called from RAKE and is in charge of
-#   - printing OAR commands to
-#      > add a new cluster
-#      > update and existing cluster
-#   - execute these commands on an OAR server
-def generate_oar_properties(options)
-
-  options[:api] ||= {}
-  conf = RefRepo::Utils.get_api_config
-  options[:api][:user] = conf['username']
-  options[:api][:pwd] = conf['password']
-  options[:api][:uri] = conf['uri']
-  options[:ssh] ||= {}
-  options[:ssh][:user] ||= 'g5kadmin'
-  options[:ssh][:host] ||= 'oar.%s.g5kadmin'
-  options[:sites] = [options[:site]] # for compatibility with other generators
-
-  # This function works as follow:
-  # (1) Initialization
-  #    (a) Load the local data contained in YAML input files
-  #    (b) Handle the program arguments (detects which site and which clusters
-  #        are targeted), and what action is requested
-  #    (c) Fetch the OAR properties of the requested site
-  # (2) Generate an OAR node hierarchy
-  #    (a) Iterate over cluster > nodes > cpus > cores
-  #    (b) [if applicable] detects the mapping GPU <-> CPU
-  #    (c) associate to each core a cpuset
-  #    (d) [if applicable] associate to each core a gpuset
-  # (3) Do something with the generated hierarchy
-
-  ############################################
-  # Complete options with data from YAML files
-  ############################################
-
-  input_files_hierarchy = load_yaml_file_hierarchy
-
-  site_name = options[:site]
-
-  # # Get the list of property keys from the reference-repo (['ref'])
-  # global_hash = load_data_hierarchy
-  # properties_ref = get_oar_properties_from_the_ref_repo(global_hash, options)
-  # property_keys = get_property_keys(properties_ref)
-
-  # If no cluster is given, then the clusters are the cluster of the given site
-  if not options.key? :clusters or options[:clusters].length == 0
-    clusters = input_files_hierarchy['sites'][site_name]['clusters'].keys
-    options[:clusters] = clusters
-  else
-    clusters = options[:clusters]
-  end
+def extract_clusters_description(clusters, site_name, options, input_files_hierarchy, site_properties)
 
   ############################################
   # Initialize variables
@@ -1149,179 +1097,151 @@ def generate_oar_properties(options)
       :nodes => []
   }
 
-  will_soon_be_allocated_cpus = []
-  will_soon_be_allocated_cores = []
-  will_soon_be_allocated_gpus = []
-
   ############################################
   # Iterate over clusters
   ############################################
 
-  global_hash = load_data_hierarchy
-  site_properties = get_oar_properties_from_the_ref_repo(global_hash, {
-      :sites => [site_name]
-  })[site_name]
-
   site_resources = oar_resources[site_name]["resources"].select{|r| r["type"] == "default"}
 
-  current_max_cpu_id = site_resources.length > 0 ? site_resources.map{|r| r["cpu"]}.max : 0
-  current_max_core_id = site_resources.length > 0 ? site_resources.map{|r| r["core"]}.max : 0
-  current_max_gpu_id = site_resources.length > 0 ? site_resources.map{|r| r["gpu"]}.select{|x| not x.nil?}.max : 0
+  next_rsc_ids = {
+      "cpu" => site_resources.length > 0 ? site_resources.map{|r| r["cpu"]}.max : 0,
+      "core" => site_resources.length > 0 ? site_resources.map{|r| r["core"]}.max : 0,
+      "gpu" => site_resources.length > 0 ? site_resources.map{|r| r["gpu"]}.select{|x| not x.nil?}.max : 0
+  }
+
+  newly_allocated_resources = {
+      "cpu" => [],
+      "core" =>[],
+      "gpu" => []
+  }
 
   # Some existing cluster have GPUs, but no GPU ID has been allocated to them
-  if current_max_gpu_id.nil?
-    current_max_gpu_id = 1
+  if next_rsc_ids["gpu"].nil?
+    next_rsc_ids["gpu"] = 0
   end
 
   # Iterate over clusters
   clusters.sort.each do |cluster_name|
 
-    cpu_current_max_id = 0
-    core_current_max_id = 0
-    gpu_current_max_id = 0
+    cpu_idx = 0
+    core_idx = 0
 
     cluster_resources = site_resources.select{|r| r["cluster"] == cluster_name}
 
-    cluster_description = input_files_hierarchy['sites'][site_name]['clusters'][cluster_name]
-    first_node = cluster_description['nodes'].first[1]
+    cluster_desc_from_input_files = input_files_hierarchy['sites'][site_name]['clusters'][cluster_name]
+    first_node = cluster_desc_from_input_files['nodes'].first[1]
 
-    cluster_numa_description = nil
+    cpu_gpu_mapping = nil
 
     # Look for information about NUMA from the input YAML file
     if first_node.key? "gpu_devices"
-      cluster_numa_description = first_node["gpu_devices"]
+      cpu_gpu_mapping = first_node["gpu_devices"]
     end
 
-    node_count = cluster_description['nodes'].length
+    node_count = cluster_desc_from_input_files['nodes'].length
+
     cpu_count = first_node['architecture']['nb_procs']
     core_count = first_node['architecture']['nb_cores'] / cpu_count
     gpu_count = first_node.key?("gpu_devices") ? first_node["gpu_devices"].length : 0
+
     cpu_model = "#{first_node['processor']['model']} #{first_node['processor']['version']}"
 
     # Detect if the cluster is new, or if it is already known by OAR
-    new_cluster = cluster_resources.select{|x| x["cluster"] == cluster_name}.length == 0
+    is_a_new_cluster = cluster_resources.select{|x| x["cluster"] == cluster_name}.length == 0
 
-    if new_cluster
-      cpu_ids = [*current_max_cpu_id+1..current_max_cpu_id+node_count*cpu_count]
-      core_ids = [*current_max_core_id+1..current_max_core_id+node_count*cpu_count*core_count]
-      gpu_ids = gpu_count > 0 ? [*current_max_gpu_id+1..current_max_gpu_id+node_count*gpu_count] : []
-      resource_ids = core_ids.map{|r| -1}
+    # <phys_rsc_map> is a hash that centralises variables that will be used for managing IDs of CPUs, COREs, GPUs of
+    # the cluster that is going to be updated. <phys_rsc_map> is useful to detect situations where the current number
+    # of resources associated to a cluster does not correspond to the needs of the cluster.
+    phys_rsc_map = {
+        "cpu" => {
+            :current_ids => [],
+            :per_server_count => first_node['architecture']['nb_procs'],
+            :per_cluster_count => node_count * cpu_count
+        },
+        "core" => {
+            :current_ids => [],
+            :per_server_count => first_node['architecture']['nb_cores'] / cpu_count,
+            :per_cluster_count => node_count * cpu_count * core_count
+        },
+        "gpu" => {
+            :current_ids => [],
+            :per_server_count => first_node.key?("gpu_devices") ? first_node["gpu_devices"].length : 0,
+            :per_cluster_count => node_count * gpu_count
+        },
+    }
 
-      current_max_cpu_id = cpu_ids.max
-      current_max_core_id = core_ids.max
-      current_max_gpu_id = gpu_count > 0 ? gpu_ids.max : current_max_gpu_id
+    phys_rsc_map.each do |physical_resource, variables|
+      if is_a_new_cluster
+        variables[:current_ids] = [*next_rsc_ids[physical_resource]+1..next_rsc_ids[physical_resource]+variables[:per_cluster_count]]
+        next_rsc_ids[physical_resource] = variables[:per_server_count] > 0 ? variables[:current_ids].max : next_rsc_ids[physical_resource]
+      else
+        variables[:current_ids] = cluster_resources.map{|r| r[physical_resource]}.select{|x| not x.nil?}.uniq.sort
+      end
+    end
+
+    if is_a_new_cluster
+      oar_resource_ids = phys_rsc_map["core"][:current_ids].map{|r| -1}
     else
-      cpu_ids = cluster_resources.map{|r| r["cpu"]}.uniq.sort
-      core_ids = cluster_resources.map{|r| r["core"]}.uniq.sort
-      gpu_ids = cluster_resources.map{|r| r["gpu"]}.select{|x| not x.nil?}.uniq.sort
-      resource_ids = cluster_resources.map{|r| r["id"]}.uniq.sort
+      oar_resource_ids = cluster_resources.map{|r| r["id"]}.uniq.sort
     end
 
-    # Try to fix a bad existing CPU configuration. There is two main cases:
-    #  1) We detect too many cpus: it likely means than a cpu of another cluster has been mis-associated to
-    #     this cluster. A simple fix is to sort CPUS of the cluster according to their number of occurence in
-    #     the cluster's properties, and keep only the N CPUs that appears the most frequently, where N is equal
-    #     to node_count * cpu_count
-    #  2) We don't have enough cpus: it likely means that a same cpu has been associated to different properties,
-    #     and that a "gap" should exist in cpu IDs (.i.e some cpu IDs are available). We fill the missing cpus
-    #     with available cpus
-    if cpu_ids.length > node_count * cpu_count
-      cpu_ids = cluster_resources
-                    .map{|r| r["cpu"]}
-                    .uniq
-                    .map{|cpu| {:count => cluster_resources.select{|r| r["cpu"] == cpu}.length, :cpu => cpu}}
-                    .sort_by {|v| v[:count]}[-node_count*cpu_count..-1]
-                    .map{|tuple2| tuple2[:cpu]}
-                    .sort
-    elsif cpu_ids.length < node_count * cpu_count
-      missing_cpus_count = node_count * cpu_count - cpu_ids.length
-      site_allocated_cpu_ids = site_resources.map{|r| r["cpu"]}.uniq
-      unallocated_cpus = (1..current_max_cpu_id)
-                             .select{|cpu_id| not site_allocated_cpu_ids.include?(cpu_id)}
-                             .select{|cpu_id| not will_soon_be_allocated_cpus.include?(cpu_id)}
-      will_soon_be_allocated_cpus += unallocated_cpus[0..missing_cpus_count]
-      cpu_ids = (cpu_ids + unallocated_cpus[0..missing_cpus_count])
-                    .uniq
-                    .sort
-    end
+    phys_rsc_map.each do |physical_resource, variables|
+      # Try to fix a bad allocation of physical resources. There is two main cases:
+      #  case 1) We detect too many resources: it likely means than a rsc of another cluster has been mis-associated to
+      #   this cluster. A simple fix is to sort <RESOURCES> of the cluster according to their number of occurence in
+      #   the cluster's properties, and keep only the N <RESOURCES> that appears the most frequently, where N is equal
+      #   to node_count * count(RESOURCES)
+      #  case 2) We don't have enough RESOURCES: it likely means that a same rsc has been associated to different
+      #   properties, and that a "gap" should exist in RESOURCES IDs (.i.e some rsc IDs are available). We fill the
+      #   missing RESOURCES with a) available RESOURCES in the site, and then b) new RESOURCES
 
-    # Try to fix a bad existing CORE configuration. There is two main cases:
-    #  1) We detect too many cores: it likely means than a core of another cluster has been mis-associated to
-    #     this cluster. A simple fix is to sort CORES of the cluster according to their number of occurence in
-    #     the cluster's properties, and keep only the N cores that appears the most frequently, where N is equal
-    #     to node_count * cpu_count * core_count
-    #  2) We don't have enough cores: it likely means that a same core has been associated to different properties,
-    #     and that a "gap" should exist in core IDs (.i.e some core IDs are available). We fill the missing cores
-    #     with available cores
-    if core_ids.length > node_count * cpu_count * core_count
-      core_ids = cluster_resources
-                    .map{|r| r["core"]}
-                    .uniq
-                    .map{|core| {:count => cluster_resources.select{|r| r["core"] == cpu}.length, :core => core}}
-                    .sort_by {|v| v[:count]}[-node_count*cpu_count*core_count..-1]
-                    .map{|tuple2| tuple2[:core]}
-                    .sort
-    elsif core_ids.length < node_count * cpu_count * core_count
-      missing_cores_count = node_count * cpu_count - cpu_ids.length
-      site_allocated_core_ids = site_resources.map{|r| r["core"]}.uniq
-      unallocated_cores = (1..current_max_core_id)
-                             .select{|core_id| not site_allocated_core_ids.include?(core_id)}
-                             .select{|core_id| not will_soon_be_allocated_cores.include?(core_id)}
-      will_soon_be_allocated_cores += unallocated_cores[0..missing_cores_count]
-      core_ids = (core_ids + unallocated_cores[0..missing_cores_count])
-                    .uniq
-                    .sort
-    end
+      phys_rsc_ids = variables[:current_ids]
+      expected_phys_rsc_count = variables[:per_cluster_count]
 
-    # Try to fix a bad existing GPU configuration. There is two main cases:
-    #  1) We detect too many gpus: it likely means than a gpu of another cluster has been mis-associated to
-    #     this cluster. A simple fix is to sort GPUs of the cluster according to their number of occurence in
-    #     the cluster's properties, and keep only the N GPUs that appears the most frequently, where N is equal
-    #     to node_count * cpu_count * gpu_count
-    #  2) We don't have enough gpus: it likely means that a same gpu has been associated to different properties,
-    #     and that a "gap" should exist in gpu IDs (.i.e some gpu IDs are available). We fill the missing gpus IDs
-    #     with available gpus IDs
-    if gpu_ids.length > node_count * gpu_count
-      gpu_ids = cluster_resources
-                     .map{|r| r["gpu"]}
-                     .uniq
-                     .map{|gpu| {:count => cluster_resources.select{|r| r["gpu"] == gpu}.length, :gpu => gpu}}
-                     .sort_by {|v| v[:count]}[-node_count*gpu_count..-1]
-                     .map{|tuple2| tuple2[:gpu]}
-                     .sort
-    elsif gpu_ids.length < node_count * gpu_count
-      missing_gpus_count = node_count * gpu_count - gpu_ids.length
-      site_allocated_gpus_ids = site_resources.map{|r| r["gpu"]}.uniq
-      unallocated_gpus = (1..current_max_gpu_id)
-                              .select{|gpu_id| not site_allocated_gpus_ids.include?(gpu_id)}
-                              .select{|gpu_id| not will_soon_be_allocated_gpus.include?(gpu_id)}
-      selected_unallocated_gpus = unallocated_gpus[0..missing_gpus_count]
-
-      # Fix for existing clusters with GPUs, and not GPU ID allocated to them
-      still_missing_gpus_count = node_count * gpu_count - selected_unallocated_gpus.length + gpu_ids.length
-      if still_missing_gpus_count > 0
-        selected_unallocated_gpus += (0..still_missing_gpus_count)
-                                         .map {|n| current_max_gpu_id + n}
-        current_max_gpu_id = selected_unallocated_gpus.max
+      if phys_rsc_ids.length > expected_phys_rsc_count
+        # Case 1
+        phys_rsc_ids = cluster_resources
+                      .map{|r| r[physical_resource]}
+                      .uniq
+                      .map{|rsc| {:count => cluster_resources.select{|r| r[physical_resource] == rsc}.length, :rsc => rsc}}
+                      .sort_by {|v| v[:count]}[-expected_phys_rsc_count..-1]
+                      .map{|tuple2| tuple2[:rsc]}
+                      .sort
+      elsif phys_rsc_ids.length < expected_phys_rsc_count
+        # Case 2
+        missing_resource_count = expected_phys_rsc_count - phys_rsc_ids.length
+        current_site_resource_ids = site_resources.map{|r| r[physical_resource]}.select{|x| not x.nil?}.uniq
+        unallocated_resources = (1..next_rsc_ids[physical_resource])
+                               .select{|rsc_id| not current_site_resource_ids.include?(rsc_id)}
+                               .select{|rsc_id| not newly_allocated_resources[physical_resource].include?(rsc_id)}
+        reallocated_resources = unallocated_resources[0..missing_resource_count]
+        newly_allocated_resources[physical_resource] += reallocated_resources
+        missing_resource_count -= reallocated_resources.length
+        if missing_resource_count > 0
+          new_resources = [*next_rsc_ids[physical_resource]+1..next_rsc_ids[physical_resource]+missing_resource_count]
+          newly_allocated_resources[physical_resource] += new_resources
+          next_rsc_ids[physical_resource] += missing_resource_count
+        else
+          new_resources = []
+        end
+        phys_rsc_ids = (phys_rsc_ids + reallocated_resources + new_resources)
+                      .uniq
+                      .sort
       end
 
-      will_soon_be_allocated_gpus += selected_unallocated_gpus
-
-      gpu_ids = (gpu_ids + selected_unallocated_gpus)
-                     .uniq
-                     .sort
+      variables[:current_ids] = phys_rsc_ids
     end
 
-    # Detect how cpusets are distributed
+    # Detect how 'CPUSETs' are distributed over CPUs of servers of this cluster
     cpuset_attribution_policy = 'round-robin'
     if first_node.key? "cpu_distribution"
       cpuset_attribution_policy = first_node["cpu_distribution"]
     end
 
-    # cpuset_attribution_policy = 'continuous'
-    if not cluster_numa_description.nil?
-      if cluster_numa_description.key? 'gpu_distribution'
-        gpuset_attribution_policy = cluster_numa_description['gpu_distribution']
+    # Detect how 'GPUSETs' are distributed over CPUs/GPUs of servers of this cluster
+    if not cpu_gpu_mapping.nil?
+      if cpu_gpu_mapping.key? 'gpu_distribution'
+        gpuset_attribution_policy = cpu_gpu_mapping['gpu_distribution']
       end
     end
 
@@ -1329,7 +1249,7 @@ def generate_oar_properties(options)
     (1..node_count).each do |node_num|
       name = "#{cluster_name}-#{node_num}"
       fqdn = "#{cluster_name}-#{node_num}.#{site_name}.grid5000.fr"
-      node_description = cluster_description["nodes"][name]
+      node_description = cluster_desc_from_input_files["nodes"][name]
 
       node_description_default_properties = site_properties["default"][name]
 
@@ -1340,8 +1260,8 @@ def generate_oar_properties(options)
         gpus = []
       end
 
-      # Assign an ID to each GPU of the node. It will be used for gpuset.
-      # The "local_id" begins at 0
+      # Assign to each GPU of a node, a "local_id" property which is between 0 and "gpu_count_per_node". This 'local_id'
+      # property will be used to assign a unique local gpuset to each GPU.
       gpu_idx = 0
       gpus.map do |v|
         v[1]['local_id'] = gpu_idx
@@ -1365,23 +1285,23 @@ def generate_oar_properties(options)
       }
 
       # Iterate over NUMA nodes (CPU)
-      (1..cpu_count).each do |cpu_num|
+      (1..phys_rsc_map["cpu"][:per_server_count]).each do |cpu_num|
         # IDs of NUMA start at 0
         numa_node = cpu_num - 1
 
         # Find GPUs associated with the current NUMA node
         numa_gpus = []
         if node_description.key? "gpu_devices"
-            numa_gpus = node_description["gpu_devices"].map {|v| v[1]}.select {|v| v['cpu_affinity'] == numa_node}
+          numa_gpus = node_description["gpu_devices"].map {|v| v[1]}.select {|v| v['cpu_affinity'] == numa_node}
         end
 
         # Iterate over cores
-        (1..core_count).each do |core_num|
+        (1..phys_rsc_map["core"][:per_server_count]).each do |core_num|
           row = {
               :cluster => cluster_name,
               :host => name,
-              :cpu => cpu_ids[cpu_current_max_id],
-              :core => core_ids[core_current_max_id],
+              :cpu => phys_rsc_map["cpu"][:current_ids][cpu_idx],
+              :core => phys_rsc_map["core"][:current_ids][core_idx],
               :cpuset => nil,
               :gpu => nil,
               :gpudevice => nil,
@@ -1390,14 +1310,15 @@ def generate_oar_properties(options)
               :gpumodel => nil,
               :oar_properties => nil,
               :fqdn => fqdn,
-              :resource_id => resource_ids[core_current_max_id],
+              :resource_id => oar_resource_ids[core_idx],
           }
 
           # Define the cpuset
           if cpuset_attribution_policy == 'continuous'
             row[:cpuset] = cpuset
           else
-            row[:cpuset] = (cpu_num - 1) + (core_num - 1) * cpu_count # smallest 'cpuset' is 0
+            # CPUSETs starts at 0
+            row[:cpuset] = (cpu_num - 1) + (core_num - 1) * phys_rsc_map["cpu"][:per_server_count]
           end
 
           row[:cpumodel] = cpu_model
@@ -1405,7 +1326,7 @@ def generate_oar_properties(options)
           # Define the gpuset
           if not numa_gpus.empty?
             if gpuset_attribution_policy == 'continuous'
-              gpu_idx = (core_num - 1) / (core_count / numa_gpus.length)
+              gpu_idx = (core_num - 1) / (phys_rsc_map["core"][:per_server_count] / numa_gpus.length)
             else
               gpu_idx = (core_num - 1) % numa_gpus.length
             end
@@ -1415,13 +1336,13 @@ def generate_oar_properties(options)
               next
             end
 
-            row[:gpu] = gpu_ids[(node_num - 1) * gpu_count + selected_gpu['local_id']]
+            row[:gpu] = phys_rsc_map["gpu"][:current_ids][(node_num - 1) * phys_rsc_map["gpu"][:per_server_count] + selected_gpu['local_id']]
             row[:gpudevice] = selected_gpu['local_id']
             row[:gpudevicepath] = selected_gpu['device']
             row[:gpumodel] = selected_gpu['model']
           end
 
-          core_current_max_id += 1
+          core_idx += 1
 
           if cpuset_attribution_policy == 'continuous'
             cpuset += 1
@@ -1430,18 +1351,76 @@ def generate_oar_properties(options)
           generated_hierarchy[:rows].push(row)
           generated_node_description[:oar_rows].push(row)
         end
-        cpu_current_max_id += 1
-      end
-
-      # If relevant, increment the counter of GPUs
-      if node_description.key? "gpu_devices"
-        gpu_count = gpus.length
-        gpu_current_max_id += gpu_count
+        cpu_idx += 1
       end
 
       generated_hierarchy[:nodes].push(generated_node_description)
     end
   end
+  return generated_hierarchy
+end
+
+############################################
+# MAIN function
+############################################
+
+# This function is called from RAKE and is in charge of
+#   - printing OAR commands to
+#      > add a new cluster
+#      > update and existing cluster
+#   - execute these commands on an OAR server
+
+def generate_oar_properties(options)
+  # This function works as follow:
+  # (1) Initialization
+  #    (a) Load the local data contained in YAML input files
+  #    (b) Handle the program arguments (detects which site and which clusters
+  #        are targeted), and what action is requested
+  #    (c) Fetch the OAR properties of the requested site
+  # (2) Generate an OAR node hierarchy
+  #    (a) Iterate over cluster > nodes > cpus > cores
+  #    (b) [if applicable] detects the mapping GPU <-> CPU
+  #    (c) associate to each core a cpuset
+  #    (d) [if applicable] associate to each core a gpuset
+  # (3) Do something with the generated hierarchy
+
+  options[:api] ||= {}
+  conf = RefRepo::Utils.get_api_config
+  options[:api][:user] = conf['username']
+  options[:api][:pwd] = conf['password']
+  options[:api][:uri] = conf['uri']
+  options[:ssh] ||= {}
+  options[:ssh][:user] ||= 'g5kadmin'
+  options[:ssh][:host] ||= 'oar.%s.g5kadmin'
+  options[:sites] = [options[:site]] # for compatibility with other generators
+
+  ############################################
+  # Complete options with data from YAML files
+  ############################################
+
+  input_files_hierarchy = load_yaml_file_hierarchy
+
+  site_name = options[:site]
+
+  # If no cluster is given, then the clusters are the cluster of the given site
+  if not options.key? :clusters or options[:clusters].length == 0
+    clusters = input_files_hierarchy['sites'][site_name]['clusters'].keys
+    options[:clusters] = clusters
+  else
+    clusters = options[:clusters]
+  end
+
+  ############################################
+  # Generate information about the clusters
+  ############################################
+
+  data_hierarchy = load_data_hierarchy
+
+  site_properties = get_oar_properties_from_the_ref_repo(data_hierarchy, {
+      :sites => [site_name]
+  })[site_name]
+
+  generated_hierarchy = extract_clusters_description(clusters, site_name, options, input_files_hierarchy, site_properties)
 
   ############################################
   # Output generated information
