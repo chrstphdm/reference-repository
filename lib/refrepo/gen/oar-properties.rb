@@ -1082,8 +1082,22 @@ end
 
 def extract_clusters_description(clusters, site_name, options, input_files_hierarchy, site_properties)
 
+  # This function works as follow:
+  # (1) Initialization
+  #    (a) Load the local data contained in YAML input files
+  #    (b) Handle the program arguments (detects which site and which clusters
+  #        are targeted), and what action is requested
+  #    (c) Fetch the OAR properties of the requested site
+  # (2) Generate an OAR node hierarchy
+  #    (a) Iterate over cluster > nodes > cpus > cores
+  #    (b) Detect existing resource_ids and {CPU, CORE, CPUSET, GPU}'s IDs
+  #    (c) [if cluster with GPU] detects the existing mapping GPU <-> CPU in the cluster
+  #    (d) Associate a cpuset to each core
+  #    (e) [if cluster with GPU] Associate a gpuset to each core
+
+
   ############################################
-  # Initialize variables
+  # (1) Initialization
   ############################################
 
   oar_resources = get_oar_resources_from_oar(options)
@@ -1094,7 +1108,7 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
   }
 
   ############################################
-  # Iterate over clusters
+  # (2) Generate an OAR node hierarchy
   ############################################
 
   site_resources = oar_resources[site_name]["resources"].select{|r| r["type"] == "default"}
@@ -1116,7 +1130,10 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
     next_rsc_ids["gpu"] = 0
   end
 
-  # Iterate over clusters
+  ############################################
+  # (2-a) Iterate over clusters. (rest: servers, cpus, cores)
+  ############################################
+
   clusters.sort.each do |cluster_name|
 
     cpu_idx = 0
@@ -1142,6 +1159,10 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
 
     cpu_model = "#{first_node['processor']['model']} #{first_node['processor']['version']}"
 
+    ############################################
+    # (2-b) Detect existing resource_ids and {CPU, CORE, CPUSET, GPU}'s IDs
+    ############################################
+
     # Detect if the cluster is new, or if it is already known by OAR
     is_a_new_cluster = cluster_resources.select{|x| x["cluster"] == cluster_name}.length == 0
 
@@ -1150,22 +1171,25 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
     # of resources associated to a cluster does not correspond to the needs of the cluster.
     phys_rsc_map = {
         "cpu" => {
-            :current_ids => [],
-            :per_server_count => first_node['architecture']['nb_procs'],
-            :per_cluster_count => node_count * cpu_count
+          :current_ids => [],
+          :per_server_count => first_node['architecture']['nb_procs'],
+          :per_cluster_count => node_count * cpu_count
         },
         "core" => {
-            :current_ids => [],
-            :per_server_count => first_node['architecture']['nb_cores'] / cpu_count,
-            :per_cluster_count => node_count * cpu_count * core_count
+          :current_ids => [],
+          :per_server_count => first_node['architecture']['nb_cores'] / cpu_count,
+          :per_cluster_count => node_count * cpu_count * core_count
         },
         "gpu" => {
-            :current_ids => [],
-            :per_server_count => first_node.key?("gpu_devices") ? first_node["gpu_devices"].length : 0,
-            :per_cluster_count => node_count * gpu_count
+          :current_ids => [],
+          :per_server_count => first_node.key?("gpu_devices") ? first_node["gpu_devices"].length : 0,
+          :per_cluster_count => node_count * gpu_count
         },
     }
 
+    # For each physical ressource, we prepare a list of IDs:
+    #   a) if the cluster is new: the IDs is a list of number in [max_resource_id, max_resource_id + cluster_resource_count]
+    #   a) if the cluster is not new: the IDs is the list of existing resources
     phys_rsc_map.each do |physical_resource, variables|
       if is_a_new_cluster
         variables[:current_ids] = [*next_rsc_ids[physical_resource]+1..next_rsc_ids[physical_resource]+variables[:per_cluster_count]]
@@ -1241,8 +1265,15 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
       end
     end
 
-    # Iterate over nodes
+    ############################################
+    # Suite of (2-a): Iterate over nodes of the cluster. (rest: cpus, cores)
+    ############################################
+
     (1..node_count).each do |node_num|
+
+      # node_index0 starts at 0
+      node_index0 = node_num -1
+
       name = "#{cluster_name}-#{node_num}"
       fqdn = "#{cluster_name}-#{node_num}.#{site_name}.grid5000.fr"
       node_description = cluster_desc_from_input_files["nodes"][name]
@@ -1269,62 +1300,80 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
       end
 
       generated_node_description = {
-          :name => name,
-          :fqdn => fqdn,
-          :cluster_name => cluster_name,
-          :site_name => site_name,
-          :description => node_description,
-          :oar_rows => [],
-          :disks => [],
-          :gpus => gpus,
-          :default_description => node_description_default_properties
+        :name => name,
+        :fqdn => fqdn,
+        :cluster_name => cluster_name,
+        :site_name => site_name,
+        :description => node_description,
+        :oar_rows => [],
+        :disks => [],
+        :gpus => gpus,
+        :default_description => node_description_default_properties
       }
 
-      # Iterate over NUMA nodes (CPU)
-      (1..phys_rsc_map["cpu"][:per_server_count]).each do |cpu_num|
-        # IDs of NUMA start at 0
-        numa_node = cpu_num - 1
 
-        # Find GPUs associated with the current NUMA node
+      ############################################
+      # Suite of (2-a): Iterate over CPUs of the server. (rest: cores)
+      ############################################
+      (1..phys_rsc_map["cpu"][:per_server_count]).each do |cpu_num|
+
+        # cpu_index0 starts at 0
+        cpu_index0 = cpu_num - 1
+
+        ############################################
+        # (2-c) [if cluster with GPU] detects the existing mapping GPU <-> CPU in the cluster
+        ############################################
         numa_gpus = []
         if node_description.key? "gpu_devices"
-          numa_gpus = node_description["gpu_devices"].map {|v| v[1]}.select {|v| v['cpu_affinity'] == numa_node}
+          numa_gpus = node_description["gpu_devices"].map {|v| v[1]}.select {|v| v['cpu_affinity'] == cpu_index0}
         end
 
-        # Iterate over cores
+        ############################################
+        # Suite of (2-a): Iterate over CORES of the CPU
+        ############################################
         (1..phys_rsc_map["core"][:per_server_count]).each do |core_num|
+
+          # core_index0 starts at 0
+          core_index0 = core_num - 1
+
+          # Prepare an Hash that represents a single OAR resource. Few
+          # keys are initialized with empty values.
           row = {
-              :cluster => cluster_name,
-              :host => name,
-              :cpu => phys_rsc_map["cpu"][:current_ids][cpu_idx],
-              :core => phys_rsc_map["core"][:current_ids][core_idx],
-              :cpuset => nil,
-              :gpu => nil,
-              :gpudevice => nil,
-              :gpudevicepath => nil,
-              :cpumodel => nil,
-              :gpumodel => nil,
-              :oar_properties => nil,
-              :fqdn => fqdn,
-              :resource_id => oar_resource_ids[core_idx],
+            :cluster => cluster_name,
+            :host => name,
+            :cpu => phys_rsc_map["cpu"][:current_ids][cpu_idx],
+            :core => phys_rsc_map["core"][:current_ids][core_idx],
+            :cpuset => nil,
+            :gpu => nil,
+            :gpudevice => nil,
+            :gpudevicepath => nil,
+            :cpumodel => nil,
+            :gpumodel => nil,
+            :oar_properties => nil,
+            :fqdn => fqdn,
+            :resource_id => oar_resource_ids[core_idx],
           }
 
-          # Define the cpuset
+          ############################################
+          # (2-d) Associate a cpuset to each core
+          ############################################
           if cpuset_attribution_policy == 'continuous'
             row[:cpuset] = cpuset
           else
             # CPUSETs starts at 0
-            row[:cpuset] = (cpu_num - 1) + (core_num - 1) * phys_rsc_map["cpu"][:per_server_count]
+            row[:cpuset] = cpu_index0 + core_index0 * phys_rsc_map["cpu"][:per_server_count]
           end
 
           row[:cpumodel] = cpu_model
 
-          # Define the gpuset
+          ############################################
+          # (2-e) [if cluster with GPU] Associate a gpuset to each core
+          ############################################
           if not numa_gpus.empty?
             if gpuset_attribution_policy == 'continuous'
-              gpu_idx = (core_num - 1) / (phys_rsc_map["core"][:per_server_count] / numa_gpus.length)
+              gpu_idx = core_index0 / (phys_rsc_map["core"][:per_server_count] / numa_gpus.length)
             else
-              gpu_idx = (core_num - 1) % numa_gpus.length
+              gpu_idx = core_index0 % numa_gpus.length
             end
 
             selected_gpu = numa_gpus[gpu_idx]
@@ -1332,7 +1381,7 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
               next
             end
 
-            row[:gpu] = phys_rsc_map["gpu"][:current_ids][(node_num - 1) * phys_rsc_map["gpu"][:per_server_count] + selected_gpu['local_id']]
+            row[:gpu] = phys_rsc_map["gpu"][:current_ids][node_index0 * phys_rsc_map["gpu"][:per_server_count] + selected_gpu['local_id']]
             row[:gpudevice] = selected_gpu['local_id']
             row[:gpudevicepath] = selected_gpu['device']
             row[:gpumodel] = selected_gpu['model']
@@ -1367,18 +1416,6 @@ end
 #   - execute these commands on an OAR server
 
 def generate_oar_properties(options)
-  # This function works as follow:
-  # (1) Initialization
-  #    (a) Load the local data contained in YAML input files
-  #    (b) Handle the program arguments (detects which site and which clusters
-  #        are targeted), and what action is requested
-  #    (c) Fetch the OAR properties of the requested site
-  # (2) Generate an OAR node hierarchy
-  #    (a) Iterate over cluster > nodes > cpus > cores
-  #    (b) [if applicable] detects the mapping GPU <-> CPU
-  #    (c) associate to each core a cpuset
-  #    (d) [if applicable] associate to each core a gpuset
-  # (3) Do something with the generated hierarchy
 
   options[:api] ||= {}
   conf = RefRepo::Utils.get_api_config
@@ -1391,7 +1428,10 @@ def generate_oar_properties(options)
   options[:sites] = [options[:site]] # for compatibility with other generators
 
   ############################################
-  # Complete options with data from YAML files
+  # Fetch:
+  # 1) hierarchy from YAML files
+  # 2) generated data from load_data_hierarchy
+  # 3) oar properties from the reference repository
   ############################################
 
   input_files_hierarchy = load_yaml_file_hierarchy
@@ -1406,17 +1446,21 @@ def generate_oar_properties(options)
     clusters = options[:clusters]
   end
 
-  ############################################
-  # Generate information about the clusters
-  ############################################
-
   data_hierarchy = load_data_hierarchy
 
   site_properties = get_oar_properties_from_the_ref_repo(data_hierarchy, {
       :sites => [site_name]
   })[site_name]
 
-  generated_hierarchy = extract_clusters_description(clusters, site_name, options, input_files_hierarchy, site_properties)
+  ############################################
+  # Generate information about the clusters
+  ############################################
+
+  generated_hierarchy = extract_clusters_description(clusters,
+                                                     site_name,
+                                                     options,
+                                                     input_files_hierarchy,
+                                                     site_properties)
 
   ############################################
   # Output generated information
