@@ -245,7 +245,7 @@ def generate_reference_api
           node["network_adapters"] = node["network_adapters"].sort_by_array(["eth0", "eth1", "eth2", "eth3", "eth4", "eth5", "eth6", "ib0.8100", "ib0", "ib1", "ib2", "ib3", "bmc"]).values
 
           unless node["gpu_devices"].nil?
-            node["gpu_devices"] = node["gpu_devices"].sort_by_array(["nvidia0", "nvidia1"]).values
+            node["gpu_devices"] = node["gpu_devices"].sort_by_array(["nvidia0", "nvidia1", "nvidia2", "nvidia3"]).values
           end
 
           # For each network adapters, populate "network_address", "switch" and "switch_port" from the network equipment description
