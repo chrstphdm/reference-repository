@@ -1173,14 +1173,14 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
         variables[:current_ids] = [*next_rsc_ids[physical_resource]+1..next_rsc_ids[physical_resource]+variables[:per_cluster_count]]
         next_rsc_ids[physical_resource] = variables[:per_server_count] > 0 ? variables[:current_ids].max : next_rsc_ids[physical_resource]
       else
-        variables[:current_ids] = cluster_resources.map{|r| r[physical_resource]}.select{|x| not x.nil?}.uniq.sort
+        variables[:current_ids] = cluster_resources.map{|r| r[physical_resource]}.select{|x| not x.nil?}.uniq
       end
     end
 
     if is_a_new_cluster
       oar_resource_ids = phys_rsc_map["core"][:current_ids].map{|r| -1}
     else
-      oar_resource_ids = cluster_resources.map{|r| r["id"]}.uniq.sort
+      oar_resource_ids = cluster_resources.map{|r| r["id"]}.uniq
     end
 
     phys_rsc_map.each do |physical_resource, variables|
