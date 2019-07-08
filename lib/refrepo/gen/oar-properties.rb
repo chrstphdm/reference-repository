@@ -1236,6 +1236,14 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
     # Detect how 'GPUSETs' are distributed over CPUs/GPUs of servers of this cluster
     gpuset_attribution_policy = DEFAULT_GPUSET_MAPPING
 
+    # Some cluster (econome) have attributed resources according to the "alpha-numerical" order of nodes
+    # ([1, 11, 12, ..., 3] instead of [1, 2, 3, 4, ...]). Here we preserve to order of existing nodes of the cluster
+    if is_a_new_cluster
+      nodes_names = (1..node_count).map {|i| {:name => "#{cluster_name}-#{i}", :fqdn => "#{cluster_name}-#{i}.#{site_name}.grid5000.fr"}}
+    else
+      nodes_names = cluster_resources.map{|r| r["host"]}.map{|fqdn| {:fqdn => fqdn, :name => fqdn.split(".")[0]}}.uniq
+    end
+
     ############################################
     # Suite of (2-a): Iterate over nodes of the cluster. (rest: cpus, cores)
     ############################################
@@ -1245,8 +1253,9 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
       # node_index0 starts at 0
       node_index0 = node_num -1
 
-      name = "#{cluster_name}-#{node_num}"
-      fqdn = "#{cluster_name}-#{node_num}.#{site_name}.grid5000.fr"
+      name = nodes_names[node_index0][:name]
+      fqdn = nodes_names[node_index0][:fqdn]
+
       node_description = cluster_desc_from_input_files["nodes"][name]
 
       node_description_default_properties = site_properties["default"][name]
@@ -1281,7 +1290,6 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
         :gpus => gpus,
         :default_description => node_description_default_properties
       }
-
 
       ############################################
       # Suite of (2-a): Iterate over CPUs of the server. (rest: cores)
