@@ -8,6 +8,37 @@ class MissingProperty < StandardError; end
 
 MiB = 1024**2
 
+# CPU distribution can be: round-robin | continuous
+PER_CLUSTER_CPUSET_MAPPING = {
+    "nantes" => {
+        "econome" => "continuous",
+        "ecotype" => "continuous",
+    },
+    "nancy" => {
+        "graoully" => "continuous",
+        "graphique" => "continuous",
+        "graphite" => "continuous",
+        "grcinq" => "continuous",
+        "grele" => "continuous",
+        "grimani" => "continuous",
+        "grimoire" => "continuous",
+        "grisou" => "continuous",
+        "grvingt" => "continuous",
+    },
+    "lille" => {
+        "chetemi" => "continuous",
+        "chiclet" => "continuous",
+        "chifflet" => "continuous",
+        "chifflot" => "continuous",
+    }
+}
+
+# CPU distribution can be: round-robin | continuous
+DEFAULT_CPUSET_MAPPING = "continuous"
+
+# GPU distribution can be: round-robin | continuous
+DEFAULT_GPUSET_MAPPING = "continuous"
+
 ############################################
 # Functions related to the "TABLE" operation
 ############################################
@@ -980,87 +1011,30 @@ def do_diff(options, generated_hierarchy)
 
         generated_rows_for_this_cluster = generated_hierarchy[:rows].select{|r| r[:cluster] == cluster}
 
-        expected_servers_count = properties["ref"][site_uid]["default"]
-                                     .map{|tuple2| tuple2[1]}
-                                     .select{|x| x["cluster"] == cluster}
-                                     .length
-
         site_resources = oar_resources[site_uid]["resources"]
         cluster_resources = site_resources.select{|x| x["cluster"] == cluster}
         default_cluster_resources = cluster_resources.select{|r| r["type"] == "default"}
 
-        cpusets = default_cluster_resources.map{|x| x["cpuset"]}
 
-        if cpusets.length > 0
-          min_cpu_set = cpusets.min
-          max_cpu_set = cpusets.max
-
-          cluster_cpu_ids_offset = default_cluster_resources.map{|x| x["cpu"]}.min - 1
-          cluster_core_ids_offset = default_cluster_resources.map{|x| x["core"]}.min - 1
-
-          (min_cpu_set..max_cpu_set).each do |cpuset_index|
-
-            default_cluster_resources_with_cpuset = default_cluster_resources.select{ |x| x["cpuset"] == cpuset_index }
-
-            sorted_cpu_ids = default_cluster_resources_with_cpuset.map { |x| x["cpu"]}.sort_by {|x| x}
-
-            # Check that the count of entries with this CPUSET matches the number of servers
-            if default_cluster_resources_with_cpuset.length != expected_servers_count
-              puts "ERROR: #{cluster}.#{site_uid}.grid5000.fr: expecting #{expected_servers_count} entries with cpuset=#{cpuset_index}, but #{default_cluster_resources_with_cpuset.length} found"
-            end
-
-            sorted_core_ids = default_cluster_resources_with_cpuset.map { |x| x["core"]}.sort_by {|x| x}
-
-            # Check that the mapping (cpu, core) <-> "cpuset" is consistent
-            if sorted_cpu_ids.length >= 1 and sorted_core_ids.length >= 1
-              generated_rows_for_this_cluster.sort_by{|row| row[:core]}.each do |row|
-                default_cluster_resources_with_cpuset.select{|y| y["cpu"] == cluster_cpu_ids_offset + row[:cpu] and y["core"] == cluster_core_ids_offset + row[:core] and y["cpuset"] != row[:cpuset] }.each do |y|
-                  puts "ERROR: I computed that (cpu=#{cluster_cpu_ids_offset + row[:cpu]},core=#{cluster_core_ids_offset + row[:core]}) should be associated with CPUSET #{row[:cpuset]} on host #{row[:fqdn]}, however on server they are associated with CPUSET=#{y["cpuset"]}"
-                  fix_cmds += %Q{
-oarnodesetting --sql "resource_id='#{y["id"]}' AND type='default'" -p cpuset=#{row[:cpuset]}}
-                end
-              end
-            end
-
-            # Check GPUs associated with OAR ressources
-            generated_rows_for_this_cluster.each do |row|
-              corresponding_resource = default_cluster_resources_with_cpuset.select{|x| x["host"] == row[:fqdn] and x["cpuset"] == row[:cpuset]}
-              if corresponding_resource.length > 0 and not row[:gpu].nil?
-                if corresponding_resource[0]["gpudevice"].to_s != row[:gpudevice].to_s
-                  puts "ERROR: I computed that GPU device of resource #{corresponding_resource[0]["id"]} should be #{row[:gpudevice]} instead of #{corresponding_resource[0]["gpudevice"]}"
-                  fix_cmds += %Q{
-oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type='default'" -p gpudevice=#{row[:gpudevice]}}
-                end
-                if corresponding_resource[0]["gpu"].to_s != row[:gpu].to_s
-                  puts "ERROR: I computed that GPU ID of resource #{corresponding_resource[0]["id"]} should be #{row[:gpu]} instead of #{corresponding_resource[0]["gpu"]}"
-                  fix_cmds += %Q{
-oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type='default'" -p gpu=#{row[:gpu]}}
-                end
-              end
-            end
-          end
-
+        if generated_rows_for_this_cluster.length > 0
           # Check that OAR resources are associated with the right cpu, core and cpuset
           generated_rows_for_this_cluster.each do |row|
             corresponding_resource = default_cluster_resources.select{|r| r["id"] == row[:resource_id]}
             if corresponding_resource.length > 0
-              if row[:cpu] != corresponding_resource[0]["cpu"]
-                puts "Error: resource #{corresponding_resource[0]["id"]} is associated to CPU (#{corresponding_resource[0]["cpu"]}), while I computed that it should be associated to #{row[:cpu]}"
-                fix_cmds += %Q{
-oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type='default'" -p cpu=#{row[:cpu]}}
-              end
-              if row[:core] != corresponding_resource[0]["core"]
-                puts "Error: resource #{corresponding_resource[0]["id"]} is associated to CORE (#{corresponding_resource[0]["core"]}), while I computed that it should be associated to #{row[:core]}"
-                fix_cmds += %Q{
-oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type='default'" -p core=#{row[:core]}}
-              end
-              if row[:cpuset] != corresponding_resource[0]["cpuset"]
-                puts "Error: resource #{corresponding_resource[0]["id"]} is associated to CPUSET (#{corresponding_resource[0]["cpuset"]}), while I computed that it should be associated to #{row[:cpuset]}"
-                fix_cmds += %Q{
-oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type='default'" -p cpuset=#{row[:cpuset]}}
+
+              {:cpu => "cpu", :core => "core", :cpuset => "cpuset", :gpu => "gpu", :gpudevice => "gpudevice"}.each do |key, value|
+                if row[key] != corresponding_resource[0][value]
+                  puts "Error: resource #{corresponding_resource[0]["id"]} is associated to #{value.upcase} (#{corresponding_resource[0][value]}), while I computed that it should be associated to #{row[key]}"
+                  fix_cmds += %Q{
+oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type='default'" -p #{value}=#{row[key]}}
+                end
               end
             else
-              puts "Error: could not find ressource with ID=#{row[:resource_id]}"
+              # If resource_id is not equal to -1, then the generator is working on a resource that should exist,
+              # however it cannot be found : the generator reports an error to the operator
+              if row[:resource_id] != -1
+                puts "Error: could not find ressource with ID=#{row[:resource_id]}"
+              end
             end
           end
         end
@@ -1253,17 +1227,14 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
     end
 
     # Detect how 'CPUSETs' are distributed over CPUs of servers of this cluster
-    cpuset_attribution_policy = 'round-robin'
-    if first_node.key? "cpu_distribution"
-      cpuset_attribution_policy = first_node["cpu_distribution"]
+    if PER_CLUSTER_CPUSET_MAPPING.key? site_name and PER_CLUSTER_CPUSET_MAPPING[site_name].key?(cluster_name)
+      cpuset_attribution_policy = PER_CLUSTER_CPUSET_MAPPING[site_name][cluster_name]
+    else
+      cpuset_attribution_policy = DEFAULT_CPUSET_MAPPING
     end
 
     # Detect how 'GPUSETs' are distributed over CPUs/GPUs of servers of this cluster
-    if not cpu_gpu_mapping.nil?
-      if cpu_gpu_mapping.key? 'gpu_distribution'
-        gpuset_attribution_policy = cpu_gpu_mapping['gpu_distribution']
-      end
-    end
+    gpuset_attribution_policy = DEFAULT_GPUSET_MAPPING
 
     ############################################
     # Suite of (2-a): Iterate over nodes of the cluster. (rest: cpus, cores)

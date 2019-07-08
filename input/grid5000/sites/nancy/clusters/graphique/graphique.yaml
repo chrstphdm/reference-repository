@@ -78,7 +78,6 @@ nodes:
 
 
   graphique-1:
-    gpu_distribution: "round-robin" # can be: round-robin | continuous
     gpu_devices:
       nvidia0:
         cpu_affinity: 0
@@ -100,7 +99,6 @@ nodes:
       max_walltime: 86400
 
   graphique-[2-6]:
-    gpu_distribution: "round-robin" # can be: round-robin | continuous
     gpu_devices:
       nvidia0:
         cpu_affinity: 0

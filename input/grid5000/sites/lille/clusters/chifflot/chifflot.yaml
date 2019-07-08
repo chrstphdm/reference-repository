@@ -87,9 +87,7 @@ nodes:
         driver: megaraid_sas
         storage: HDD
         reservation: true
-    cpu_distribution: "continuous" # can be: round-robin | continuous
   chifflot-[1-6]:
-    gpu_distribution: "round-robin" # can be: round-robin | continuous
     gpu_devices:
       nvidia0:
         cpu_affinity: 0
@@ -108,7 +106,6 @@ nodes:
         vbios_version: 86.00.4D.00.01
         vendor: Nvidia
   chifflot-[7-8]:
-    gpu_distribution: "round-robin" # can be: round-robin | continuous
     gpu_devices:
       nvidia0:
         cpu_affinity: 0
