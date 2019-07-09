@@ -1028,7 +1028,7 @@ def do_diff(options, generated_hierarchy)
             if corresponding_resource.length > 0
 
               {:cpu => "cpu", :core => "core", :cpuset => "cpuset", :gpu => "gpu", :gpudevice => "gpudevice"}.each do |key, value|
-                if row[key] != corresponding_resource[0][value]
+                if row[key] != corresponding_resource[0][value] and not (key == :gpu and row[key].nil? and corresponding_resource[0][value] == 0)
                   puts "Error: resource #{corresponding_resource[0]["id"]} is associated to #{value.upcase} (#{corresponding_resource[0][value]}), while I computed that it should be associated to #{row[key]}"
                   fix_cmds += %Q{
 oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type='default'" -p #{value}=#{row[key]}}
