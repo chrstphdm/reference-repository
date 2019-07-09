@@ -16,6 +16,7 @@ PER_CLUSTER_CPUSET_MAPPING = {
     },
     "nancy" => {
         "graoully" => "continuous",
+        "graffiti" => "round-robin",
         "graphique" => "continuous",
         "graphite" => "continuous",
         "grcinq" => "continuous",
