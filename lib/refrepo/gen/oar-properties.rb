@@ -19,7 +19,7 @@ PER_CLUSTER_CPUSET_MAPPING = {
         "graoully" => "continuous",
         "graffiti" => "round-robin",
         "graphique" => "continuous",
-        "graphite" => "continuous",
+        "graphite" => "round-robin",
         "grcinq" => "continuous",
         "grele" => "continuous",
         "grimani" => "continuous",
@@ -1123,12 +1123,8 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
     cluster_desc_from_input_files = input_files_hierarchy['sites'][site_name]['clusters'][cluster_name]
     first_node = cluster_desc_from_input_files['nodes'].first[1]
 
-    cpu_gpu_mapping = nil
 
-    # Look for information about NUMA from the input YAML file
-    if first_node.key? "gpu_devices"
-      cpu_gpu_mapping = first_node["gpu_devices"]
-    end
+    is_quirk_cluster = false
 
     node_count = cluster_desc_from_input_files['nodes'].length
 
@@ -1181,7 +1177,20 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
     if is_a_new_cluster
       oar_resource_ids = phys_rsc_map["core"][:current_ids].map{|r| -1}
     else
-      oar_resource_ids = cluster_resources.map{|r| r["id"]}.uniq
+      # Some clusters such as graphite have a different organisation:
+      # for example, graphite-1 is organised as follow:
+      #   1st resource => cpu: 665, core: 1903
+      #   2nd resource => cpu: 666, core: 1904
+      #   3rd resource => cpu: 665, core: 1905
+      #   4th resource => cpu: 666, core: 1906
+      #   ...
+      #
+      # To cope with such cases and ensure an homogeneous processing of all clusters, sorting oar_resource_ids according
+      # to CPU and CORE is needed. And for those "special" clusters, a "is_quirk_cluster" variable is set to true
+      oar_resource_ids = cluster_resources.sort_by {|r| [ r["cpu"], r["core"]] }.map{|r| r["id"]}
+      if oar_resource_ids != cluster_resources.map{|r| r["id"]}.uniq
+        is_quirk_cluster = true
+      end
     end
 
     phys_rsc_map.each do |physical_resource, variables|
@@ -1320,13 +1329,24 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
           # core_index0 starts at 0
           core_index0 = core_num - 1
 
+          # Compute cpu and core ID
+          oar_resource_id = oar_resource_ids[core_idx]
+          if not is_quirk_cluster
+            cpu_id = phys_rsc_map["cpu"][:current_ids][cpu_idx]
+            core_id = phys_rsc_map["core"][:current_ids][core_idx]
+          else
+            current_resource = cluster_resources.select{|r| r["id"] == oar_resource_id}[0]
+            cpu_id = current_resource["cpu"]
+            core_id = current_resource["core"]
+          end
+
           # Prepare an Hash that represents a single OAR resource. Few
           # keys are initialized with empty values.
           row = {
             :cluster => cluster_name,
             :host => name,
-            :cpu => phys_rsc_map["cpu"][:current_ids][cpu_idx],
-            :core => phys_rsc_map["core"][:current_ids][core_idx],
+            :cpu => cpu_id,
+            :core => core_id,
             :cpuset => nil,
             :gpu => nil,
             :gpudevice => nil,
@@ -1335,7 +1355,7 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
             :gpumodel => nil,
             :oar_properties => nil,
             :fqdn => fqdn,
-            :resource_id => oar_resource_ids[core_idx],
+            :resource_id => oar_resource_id,
           }
 
           ############################################
