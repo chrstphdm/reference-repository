@@ -1123,7 +1123,15 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
     cluster_desc_from_input_files = input_files_hierarchy['sites'][site_name]['clusters'][cluster_name]
     first_node = cluster_desc_from_input_files['nodes'].first[1]
 
-
+    # Some clusters such as graphite have a different organisation:
+    # for example, graphite-1 is organised as follow:
+    #   1st resource => cpu: 665, core: 1903
+    #   2nd resource => cpu: 666, core: 1904
+    #   3rd resource => cpu: 665, core: 1905
+    #   4th resource => cpu: 666, core: 1906
+    #   ...
+    #
+    # To cope with such cases and ensure an homogeneous processing a "is_quirk_cluster" variable is set to true.
     is_quirk_cluster = false
 
     node_count = cluster_desc_from_input_files['nodes'].length
@@ -1177,18 +1185,8 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
     if is_a_new_cluster
       oar_resource_ids = phys_rsc_map["core"][:current_ids].map{|r| -1}
     else
-      # Some clusters such as graphite have a different organisation:
-      # for example, graphite-1 is organised as follow:
-      #   1st resource => cpu: 665, core: 1903
-      #   2nd resource => cpu: 666, core: 1904
-      #   3rd resource => cpu: 665, core: 1905
-      #   4th resource => cpu: 666, core: 1906
-      #   ...
-      #
-      # To cope with such cases and ensure an homogeneous processing of all clusters, sorting oar_resource_ids according
-      # to CPU and CORE is needed. And for those "special" clusters, a "is_quirk_cluster" variable is set to true
-      oar_resource_ids = cluster_resources.sort_by {|r| [ r["cpu"], r["core"]] }.map{|r| r["id"]}
-      if oar_resource_ids != cluster_resources.map{|r| r["id"]}.uniq
+      oar_resource_ids = cluster_resources.map{|r| r["id"]}.uniq
+      if oar_resource_ids != cluster_resources.sort_by {|r| [ r["cpu"], r["core"]] }.map{|r| r["id"]}
         is_quirk_cluster = true
       end
     end
