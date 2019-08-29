@@ -92,6 +92,7 @@ srv-data:
   alias:
     - nfs
     - public
+    - storage1
   warranty: 2022-11-27
   serial: 276S992
   network_adapters:
@@ -113,3 +114,18 @@ gwol-south:
       mounted: true
       ip: 172.17.143.15
       mac: 4c:d9:8f:19:84:50
+
+opensm:
+  kind: physical
+  network_adapters:
+    default:
+      mounted: true
+      ip: 172.16.132.13
+      mac: 00:26:6C:F0:13:64
+    bmc:
+      mounted: true
+      ip: 172.17.132.13
+      mac: 00:26:6C:F0:13:66
+    ib0:
+      mounted: true
+      ip: 172.18.132.13

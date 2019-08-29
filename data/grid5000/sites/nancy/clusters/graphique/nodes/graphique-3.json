@@ -6,9 +6,9 @@
     "platform_type": "x86_64"
   },
   "bios": {
-    "release_date": "08/28/2014",
+    "release_date": "12/04/2018",
     "vendor": "Dell Inc.",
-    "version": "1.0.4"
+    "version": "2.9.1"
   },
   "chassis": {
     "manufacturer": "Dell Inc.",
@@ -21,6 +21,26 @@
     "gpu_count": 2,
     "gpu_model": "GTX 980",
     "gpu_vendor": "Nvidia"
+  },
+  "gpu_devices": {
+    "nvidia0": {
+      "cpu_affinity": 0,
+      "device": "/dev/nvidia0",
+      "memory": 4043000000,
+      "model": "GeForce GTX 980",
+      "power_default_limit": "180.00 W",
+      "vbios_version": "84.04.2F.00.18",
+      "vendor": "Nvidia"
+    },
+    "nvidia1": {
+      "cpu_affinity": 1,
+      "device": "/dev/nvidia1",
+      "memory": 4043000000,
+      "model": "GeForce GTX 980",
+      "power_default_limit": "180.00 W",
+      "vbios_version": "84.04.2F.00.18",
+      "vendor": "Nvidia"
+    }
   },
   "kavlan": {
     "eth0": {
@@ -55,7 +75,7 @@
       "device": "eth0",
       "driver": "bnx2x",
       "enabled": true,
-      "firmware_version": "FFV7.10.17 bc 7.10.11",
+      "firmware_version": "FFV7.10.18 bc 7.10.11",
       "interface": "Ethernet",
       "ip": "172.16.67.3",
       "kavlan": true,
@@ -76,7 +96,7 @@
       "device": "eth1",
       "driver": "bnx2x",
       "enabled": false,
-      "firmware_version": "FFV7.10.17 bc 7.10.11",
+      "firmware_version": "FFV7.10.18 bc 7.10.11",
       "interface": "Ethernet",
       "kavlan": false,
       "mac": "44:a8:42:0a:33:3f",
@@ -92,7 +112,7 @@
       "device": "eth2",
       "driver": "bnx2x",
       "enabled": false,
-      "firmware_version": "FFV7.10.17 bc 7.10.11",
+      "firmware_version": "FFV7.10.18 bc 7.10.11",
       "interface": "Ethernet",
       "kavlan": false,
       "mac": "44:a8:42:0a:33:41",
@@ -108,7 +128,7 @@
       "device": "eth3",
       "driver": "bnx2x",
       "enabled": false,
-      "firmware_version": "FFV7.10.17 bc 7.10.11",
+      "firmware_version": "FFV7.10.18 bc 7.10.11",
       "interface": "Ethernet",
       "kavlan": false,
       "mac": "44:a8:42:0a:33:43",

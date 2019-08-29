@@ -25,6 +25,7 @@ gpu:
     gpu_count: optional_integer
     gpu_vendor: optional_string
     gpu_model: optional_string
+gpu_devices: optional_hash
 kavlan:
   <multi>:
     <multi>: ip_address
@@ -117,6 +118,6 @@ supported_job_types:
   besteffort: boolean
   deploy: boolean
   max_walltime: integer
-  queues: array
+  queues: optional_array
   virtual: optional # optional_boolean # string
 addressing_plan: optional

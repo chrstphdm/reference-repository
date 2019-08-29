@@ -7,13 +7,30 @@ graphique-1:
     nb_threads: 24
     platform_type: x86_64
   bios:
-    release_date: 08/28/2014
+    release_date: 12/04/2018
     vendor: Dell Inc.
-    version: 1.0.4
+    version: 2.9.1
   chassis:
     manufacturer: Dell Inc.
     name: PowerEdge R730
     serial: BYGMJ32
+  gpu_devices:
+    nvidia0:
+      cpu_affinity: 0
+      device: "/dev/nvidia0"
+      memory: 6083000000
+      model: GeForce GTX TITAN Black
+      power_default_limit: 250.00 W
+      vbios_version: 80.80.4E.00.90
+      vendor: Nvidia
+    nvidia1:
+      cpu_affinity: 1
+      device: "/dev/nvidia1"
+      memory: 6083000000
+      model: GeForce GTX TITAN Black
+      power_default_limit: 250.00 W
+      vbios_version: 80.80.4E.00.90
+      vendor: Nvidia
   main_memory:
     ram_size: 68719476736
   network_adapters:
@@ -23,7 +40,7 @@ graphique-1:
       management: true
     eth0:
       driver: bnx2x
-      firmware_version: FFV7.10.17 bc 7.10.11
+      firmware_version: FFV7.10.18 bc 7.10.11
       interface: Ethernet
       ip: 172.16.67.1
       mac: b0:83:fe:e5:c0:54
@@ -34,7 +51,7 @@ graphique-1:
       vendor: Broadcom
     eth1:
       driver: bnx2x
-      firmware_version: FFV7.10.17 bc 7.10.11
+      firmware_version: FFV7.10.18 bc 7.10.11
       interface: Ethernet
       mac: b0:83:fe:e5:c0:56
       management: false
@@ -43,7 +60,7 @@ graphique-1:
       vendor: Broadcom
     eth2:
       driver: bnx2x
-      firmware_version: FFV7.10.17 bc 7.10.11
+      firmware_version: FFV7.10.18 bc 7.10.11
       interface: Ethernet
       mac: b0:83:fe:e5:c0:58
       management: false
@@ -52,7 +69,7 @@ graphique-1:
       vendor: Broadcom
     eth3:
       driver: bnx2x
-      firmware_version: FFV7.10.17 bc 7.10.11
+      firmware_version: FFV7.10.18 bc 7.10.11
       interface: Ethernet
       mac: b0:83:fe:e5:c0:5a
       management: false
@@ -97,6 +114,5 @@ graphique-1:
       firmware_version: 4.24
       model: PERC H330
       size: 299439751168
-
   supported_job_types:
     virtual: ivt

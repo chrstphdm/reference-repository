@@ -39,13 +39,13 @@ class G5KHardwareGenerator < WikiGenerator
           next if node_hash['status'] == 'retired'
           nodes += 1
           cores += node_hash['architecture']['nb_cores']
-          if node_hash['gpu'] and node_hash['gpu']['gpu_count']
-            gpus += node_hash['gpu']['gpu_count']
+          if node_hash['gpu_devices']
+            gpus += node_hash['gpu_devices'].length
           end
-          ssds += node_hash['storage_devices'].values.select { |d| d['storage'] == 'SSD' }.length
-          hdds += node_hash['storage_devices'].values.select { |d| d['storage'] == 'HDD' }.length
-          node_hash['storage_devices'].each_pair do |k, e|
-            storage_space += e['size']
+          ssds += node_hash['storage_devices'].select { |d| d['storage'] == 'SSD' }.length
+          hdds += node_hash['storage_devices'].select { |d| d['storage'] == 'HDD' }.length
+          node_hash['storage_devices'].each do |i|
+            storage_space += i['size']
           end
         end
       end
@@ -108,12 +108,12 @@ class G5KHardwareGenerator < WikiGenerator
             data['ram_size'][key][site_uid] += 1
 
             # HPC Networks
-            interfaces = node_hash['network_adapters'].select{ |k, v|
+            interfaces = node_hash['network_adapters'].select{ |v|
               v['enabled'] and
                 (v['mounted'] or v['mountable']) and
                 not v['management'] and
-                (k =~ /\./).nil? # exclude PKEY / VLAN interfaces see #9417
-            }.map{ |k, v|
+                (v['device'] =~ /\./).nil? # exclude PKEY / VLAN interfaces see #9417
+            }.map{ |v|
               [
                 {
                   text: v['interface'] + ' ' + G5K.get_rate(v['rate']),
@@ -129,12 +129,12 @@ class G5KHardwareGenerator < WikiGenerator
             }
 
             # NIC models
-            interfaces = node_hash['network_adapters'].select{ |k, v|
+            interfaces = node_hash['network_adapters'].select{ |v|
               v['enabled'] and
                 (v['mounted'] or v['mountable']) and
                 not v['management'] and
-                (k =~ /\./).nil? # exclude PKEY / VLAN interfaces see #9417
-            }.map{ |k, v|
+                (v['device'] =~ /\./).nil? # exclude PKEY / VLAN interfaces see #9417
+            }.map{ |v|
               t = (v['vendor'] || 'N/A') + ' ' + (v['model'] || 'N/A');
               [
                 {
@@ -154,22 +154,45 @@ class G5KHardwareGenerator < WikiGenerator
             }
 
             # Accelerators
-            g = node_hash['gpu']
             m = node_hash['mic']
 
-            gpu_families = {}
-            gpu_families[[g['gpu_vendor']]] = g['gpu_count'] if g and g['gpu']
             mic_families = {}
             mic_families[[m['mic_vendor']]] = m['mic_count'] if m and m['mic']
+            mic_details = {}
+            mic_details[["#{m['mic_vendor']} #{m['mic_model']}"]] = [m['mic_count'], m['mic_cores']] if m and m['mic']
+
+            lg = node_hash['gpu_devices']
+            gpu_families = {}
+            gpu_details = {}
+            unless lg.nil?
+              lg.each { |g|
+                d = g[1]
+                vendor = d['vendor']
+                cmodel = d['model']
+                model = GPURef.getGrid5000LegacyNameFor(cmodel)
+                nbcores = GPURef.getNumberOfCoresFor(cmodel)
+
+                family = gpu_families[[vendor]]
+                if family.nil?
+                  gpu_families[[vendor]] = 1
+                else
+                  gpu_families[[vendor]] += 1
+                end
+
+                details = gpu_details[["#{vendor} #{model}"]]
+
+                if details.nil?
+                  gpu_details[["#{vendor} #{model}"]] = [1, nbcores]
+                else
+                  gpu_details[["#{vendor} #{model}"]] = [details[0]+1, details[1]+nbcores]
+                end
+              }
+            end
+
             gpu_families.merge(mic_families).sort.to_h.each { |k, v|
               init(data, 'acc_families', k)
               data['acc_families'][k][site_uid] += v
             }
-
-            gpu_details = {}
-            gpu_details[["#{g['gpu_vendor']} #{g['gpu_model']}"]] = [g['gpu_count'], g['gpu_cores']] if g and g['gpu']
-            mic_details = {}
-            mic_details[["#{m['mic_vendor']} #{m['mic_model']}"]] = [m['mic_count'], m['mic_cores']] if m and m['mic']
 
             gpu_details.merge(mic_details).sort.to_h.each { |k, v|
               init(data, 'acc_models', k)
@@ -314,21 +337,21 @@ class G5KHardwareGenerator < WikiGenerator
         cluster_hash.fetch('nodes').sort.to_h.each do |node_uid, node_hash|
           next if node_hash['status'] == 'retired'
           sd = node_hash['storage_devices']
-          reservable_disks = sd.to_a.select{ |v| v[1]['reservation'] == true }.count > 0
-          maindisk = sd.to_a.select { |v| v[0] == 'sda' }.first[1]
+          reservable_disks = sd.select{ |v| v['reservation'] == true }.count > 0
+          maindisk = sd.select { |v| v['device'] == 'sda' }[0]
           maindisk_t = maindisk['storage'] + ' ' + G5K.get_size(maindisk['size'],'metric')
-          other = sd.to_a.select { |d| d[0] != 'sda' }
-          hdds = other.select { |d| d[1]['storage'] == 'HDD' }
+          other = sd.select { |d| d['device'] != 'sda' }
+          hdds = other.select { |d| d['storage'] == 'HDD' }
           if hdds.count == 0
             hdd_t = "0"
           else
-            hdd_t = hdds.count.to_s + " (" + hdds.map { |d| G5K.get_size(d[1]['size'],'metric') }.join(', ') + ")"
+            hdd_t = hdds.count.to_s + " (" + hdds.map { |d| G5K.get_size(d['size'],'metric') }.join(', ') + ")"
           end
-          ssds = other.select { |d| d[1]['storage'] == 'SSD' }
+          ssds = other.select { |d| d['storage'] == 'SSD' }
           if ssds.count == 0
             ssd_t = "0"
           else
-            ssd_t = ssds.count.to_s + " (" + ssds.map { |d| G5K.get_size(d[1]['size'],'metric') }.join(', ') + ")"
+            ssd_t = ssds.count.to_s + " (" + ssds.map { |d| G5K.get_size(d['size'],'metric') }.join(', ') + ")"
           end
           queues = cluster_hash['queues'] - ['admin', 'default']
           queue_t = (queues.nil? || (queues.empty? ? '' : "_.28" + queues[0].gsub(' ', '_') + ' queue.29'))
@@ -373,13 +396,18 @@ class G5KHardwareGenerator < WikiGenerator
         cluster_hash.fetch('nodes').sort.to_h.each { |node_uid, node_hash|
           next if node_hash['status'] == 'retired'
           if node_hash['network_adapters']
-            node_interfaces = node_hash['network_adapters'].select{ |k, v| v['interface'] == 'Ethernet' and v['enabled'] == true and (v['mounted'] == true or v['mountable'] == true) and v['management'] == false }
+            node_interfaces = node_hash['network_adapters'].select{ |v|
+              v['interface'] == 'Ethernet' and
+              v['enabled'] == true and
+              (v['mounted'] == true or v['mountable'] == true) and
+              v['management'] == false
+            }
 
             interfaces = {}
-            interfaces['25g_count'] = node_interfaces.select { |k, v| v['rate'] == 25_000_000_000 }.count
-            interfaces['10g_count'] = node_interfaces.select { |k, v| v['rate'] == 10_000_000_000 }.count
-            interfaces['1g_count'] = node_interfaces.select { |k, v| v['rate'] == 1_000_000_000 }.count
-            interfaces['details'] = node_interfaces.map{ |k, v| k + (v['name'].nil? ? '' : '/' + v['name'])  + ' (' + G5K.get_rate(v['rate']) + ')' }.sort.join(', ')
+            interfaces['25g_count'] = node_interfaces.select { |v| v['rate'] == 25_000_000_000 }.count
+            interfaces['10g_count'] = node_interfaces.select { |v| v['rate'] == 10_000_000_000 }.count
+            interfaces['1g_count'] = node_interfaces.select { |v| v['rate'] == 1_000_000_000 }.count
+            interfaces['details'] = node_interfaces.map{ |v| v['device'] + (v['name'].nil? ? '' : '/' + v['name'])  + ' (' + G5K.get_rate(v['rate']) + ')' }.sort.join(', ')
             queues = cluster_hash['queues'] - ['admin', 'default', 'testing']
             interfaces['queues'] = (queues.nil? || (queues.empty? ? '' : queues[0] + G5K.pluralize(queues.count, ' queue')))
             interface_add(network_interfaces, node_uid, interfaces) if node_interfaces.count > 1

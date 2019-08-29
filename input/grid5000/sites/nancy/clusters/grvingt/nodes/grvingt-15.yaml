@@ -7,9 +7,9 @@ grvingt-15:
     nb_threads: 64
     platform_type: x86_64
   bios:
-    release_date: 05/30/2018
+    release_date: 06/14/2019
     vendor: Dell Inc.
-    version: 1.4.9
+    version: 2.2.11
   chassis:
     manufacturer: Dell Inc.
     name: PowerEdge C6420
@@ -19,7 +19,7 @@ grvingt-15:
   network_adapters:
     bmc:
       ip: 172.17.76.15
-      mac: 50:9a:4c:85:cf:fe
+      mac: 50:9a:4c:9d:b4:c8
       management: true
     eth0:
       driver: i40e
