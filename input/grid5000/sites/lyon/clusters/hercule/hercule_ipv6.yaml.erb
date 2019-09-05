@@ -1,0 +1,8 @@
+---
+nodes:
+<% (1..4).each do |index| %>
+  hercule-<%= index %>:
+    network_adapters:
+      eth1:
+        ip6: fd0e:ebc6:bc7:400:4::<%= index.to_s(16) %>
+<% end %>
