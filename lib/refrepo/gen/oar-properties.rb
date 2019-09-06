@@ -51,8 +51,10 @@ def export_rows_as_formated_line(generated_hierarchy)
   puts "|#{'cluster'.rjust(10)} | #{'host'.ljust(20)} | #{'cpu'.ljust(5)} | #{'core'.ljust(5)} | #{'cpuset'.ljust(8)} | #{'gpu'.ljust(4)} | #{'gpudevice'.ljust(20)} | #{'cpumodel'.ljust(30)} | #{'gpumodel'.ljust(30)}|"
   puts "+#{'-' * 10} + #{'-' * 20} + #{'-' * 5} + #{'-' * 5} + #{'-' * 8} + #{'-' * 4} + #{'-' * 20} + #{'-' * 30} + #{'-' * 30}+"
 
+  oar_rows = generated_hierarchy[:nodes].map{|node| node[:oar_rows]}.flatten
+
   # Display rows
-  generated_hierarchy[:rows].each do |row|
+  oar_rows.each do |row|
     cluster = row[:cluster].to_s
     host = row[:host].to_s
     cpu = row[:cpu].to_s
@@ -1014,7 +1016,10 @@ def do_diff(options, generated_hierarchy)
 
       options[:clusters].each do |cluster|
 
-        generated_rows_for_this_cluster = generated_hierarchy[:rows].select{|r| r[:cluster] == cluster}
+        generated_rows_for_this_cluster = generated_hierarchy[:nodes]
+                                              .map{|node| node[:oar_rows]}
+                                              .flatten
+                                              .select{|r| r[:cluster] == cluster}
 
         site_resources = oar_resources[site_uid]["resources"]
         cluster_resources = site_resources.select{|x| x["cluster"] == cluster}
@@ -1082,7 +1087,6 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
   oar_resources = get_oar_resources_from_oar(options)
 
   generated_hierarchy = {
-      :rows => [],
       :nodes => []
   }
 
@@ -1395,7 +1399,6 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
             cpuset += 1
           end
 
-          generated_hierarchy[:rows].push(row)
           generated_node_description[:oar_rows].push(row)
         end
         cpu_idx += 1
