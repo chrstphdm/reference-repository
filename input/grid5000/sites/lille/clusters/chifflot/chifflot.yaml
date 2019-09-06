@@ -4,12 +4,12 @@ created_at: 2018-08-01
 priority: '201870'
 kavlan: true
 queues:
-  - admin
-  - default
+- admin
+- default
 
 nodes:
 
-# Global node properties
+  # Global node properties
   chifflot-[1-8]:
     supported_job_types:
       deploy: true
@@ -18,8 +18,8 @@ nodes:
     processor:
       microarchitecture: Skylake
     performance:
-        core_flops: 16360000000
-        node_flops: 408900000000
+      core_flops: 16360000000
+      node_flops: 408900000000
     monitoring:
       wattmeter: multiple
       metric: power
