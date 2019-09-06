@@ -1,0 +1,19 @@
+ nodes:
+ <% (1..2).each { |i| %>
+   gemini-<%= i %>:
+     network_adapters:
+       eth0:
+         mounted: true
+         ip: 172.16.53.<%= i %>
+         mac: <%= %w(
+                     D8:C4:97:B8:32:83
+                     D8:C4:97:B8:32:FD
+                    )[i-1] %>
+       bmc:
+         ip: 172.17.53.<%= i %>
+         mac: <%= %w(
+                     D8:C4:97:B7:AE:72
+                     D8:C4:97:B7:AE:44
+                   )[i-1] %>
+<% } %>
+
