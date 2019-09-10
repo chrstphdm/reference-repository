@@ -21,6 +21,7 @@ nodes:
         available: false
     processor:
       microarchitecture: Broadwell
+    cpuset_mapping: round-robin
     network_adapters:
       eth0:
         enabled: true

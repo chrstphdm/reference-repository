@@ -10,32 +10,6 @@ class MissingProperty < StandardError; end
 MiB = 1024**2
 
 # CPU distribution can be: round-robin | continuous
-PER_CLUSTER_CPUSET_MAPPING = {
-    "nantes" => {
-        "econome" => "continuous",
-        "ecotype" => "continuous",
-    },
-    "nancy" => {
-        "graoully" => "continuous",
-        "graffiti" => "round-robin",
-        "graphique" => "round-robin",
-        "graphite" => "continuous",
-        "grcinq" => "continuous",
-        "grele" => "round-robin",
-        "grimani" => "round-robin",
-        "grimoire" => "continuous",
-        "grisou" => "continuous",
-        "grvingt" => "continuous",
-    },
-    "lille" => {
-        "chetemi" => "continuous",
-        "chiclet" => "continuous",
-        "chifflet" => "round-robin",
-        "chifflot" => "round-robin",
-    }
-}
-
-# CPU distribution can be: round-robin | continuous
 DEFAULT_CPUSET_MAPPING = "continuous"
 
 # GPU distribution can be: round-robin | continuous
@@ -1145,6 +1119,9 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
     gpu_count = first_node.key?("gpu_devices") ? first_node["gpu_devices"].length : 0
 
     cpu_model = "#{first_node['processor']['model']} #{first_node['processor']['version']}"
+    cpuset_mapping = first_node.key?("cpuset_mapping") ? first_node["cpuset_mapping"] : DEFAULT_CPUSET_MAPPING
+    # Detect how 'GPUSETs' are distributed over CPUs/GPUs of servers of this cluster
+    gpuset_mapping = DEFAULT_GPUSET_MAPPING
 
     ############################################
     # (2-b) Detect existing resource_ids and {CPU, CORE, CPUSET, GPU}'s IDs
@@ -1242,16 +1219,6 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
       variables[:current_ids] = phys_rsc_ids
     end
 
-    # Detect how 'CPUSETs' are distributed over CPUs of servers of this cluster
-    if PER_CLUSTER_CPUSET_MAPPING.key? site_name and PER_CLUSTER_CPUSET_MAPPING[site_name].key?(cluster_name)
-      cpuset_attribution_policy = PER_CLUSTER_CPUSET_MAPPING[site_name][cluster_name]
-    else
-      cpuset_attribution_policy = DEFAULT_CPUSET_MAPPING
-    end
-
-    # Detect how 'GPUSETs' are distributed over CPUs/GPUs of servers of this cluster
-    gpuset_attribution_policy = DEFAULT_GPUSET_MAPPING
-
     # Some cluster (econome) have attributed resources according to the "alpha-numerical" order of nodes
     # ([1, 11, 12, ..., 3] instead of [1, 2, 3, 4, ...]). Here we preserve to order of existing nodes of the cluster
     if is_a_new_cluster
@@ -1291,7 +1258,7 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
         gpu_idx += 1
       end
 
-      if cpuset_attribution_policy == 'continuous'
+      if cpuset_mapping == 'continuous'
         cpuset = 0
       end
 
@@ -1363,7 +1330,7 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
           ############################################
           # (2-d) Associate a cpuset to each core
           ############################################
-          if cpuset_attribution_policy == 'continuous'
+          if cpuset_mapping == 'continuous'
             row[:cpuset] = cpuset
           else
             # CPUSETs starts at 0
@@ -1376,7 +1343,7 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
           # (2-e) [if cluster with GPU] Associate a gpuset to each core
           ############################################
           if not numa_gpus.empty?
-            if gpuset_attribution_policy == 'continuous'
+            if gpuset_mapping == 'continuous'
               gpu_idx = core_index0 / (phys_rsc_map["core"][:per_server_count] / numa_gpus.length)
             else
               gpu_idx = core_index0 % numa_gpus.length
@@ -1395,7 +1362,7 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
 
           core_idx += 1
 
-          if cpuset_attribution_policy == 'continuous'
+          if cpuset_mapping == 'continuous'
             cpuset += 1
           end
 
