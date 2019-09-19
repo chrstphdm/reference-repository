@@ -153,7 +153,7 @@ end
 # OAR properties can be divided in two sets:
 #   - properties that were previously created by 'oar_resources_add'
 #   - remaining properties that can be generated from API
-def generate_oar_property_creation(site_name)
+def generate_oar_property_creation(site_name, data_hierarchy)
 
   #############################################
   # Create properties that were previously created
@@ -183,7 +183,8 @@ property_exist 'gpu_model' || oarproperty -a gpu_model --varchar
 }
 
   # Fetch oar properties from ref repo
-  global_hash = load_data_hierarchy
+  # global_hash = load_data_hierarchy
+  global_hash = data_hierarchy
   site_properties = get_oar_properties_from_the_ref_repo(global_hash, {
       :sites => [site_name]
   })[site_name]
@@ -207,7 +208,7 @@ end
 #   (3)         > * If the resource already exists, the CPU and CORE associated to the resource is detected
 #   (4)           * The resource is exported as an OAR command
 #   (5)      * If applicable, create/update the storage devices associated to the node
-def export_rows_as_oar_command(generated_hierarchy, site_name, site_properties)
+def export_rows_as_oar_command(generated_hierarchy, site_name, site_properties, data_hierarchy)
 
   result = ""
 
@@ -216,7 +217,7 @@ def export_rows_as_oar_command(generated_hierarchy, site_name, site_properties)
   result += generate_oar_commands_header()
 
   # Ensure that OAR properties exist before creating/updating OAR resources
-  result += generate_oar_property_creation(site_name)
+  result += generate_oar_property_creation(site_name, data_hierarchy)
 
   # Iterate over nodes of the generated resource hierarchy
   generated_hierarchy[:nodes].each do |node|
@@ -261,14 +262,14 @@ def export_rows_as_oar_command(generated_hierarchy, site_name, site_properties)
     result += generate_set_node_properties_cmd(node[:fqdn], node[:default_description])
 
     # Iterate over storage devices
-    node[:description]["storage_devices"].select {|k, v| v["reservation"]}.each do |storage_device|
+    node[:description]["storage_devices"].select{|v| v.key?("reservation") and v["reservation"]}.each do |storage_device|
       # As <storage_device> is an Array, where the first element is the device name (i.e. sda, sdb, ...),
       # and the second element is a dictionnary containing information about the storage device,
       # thus two variables are created:
       #    - <storage_device_name> : variable that contains the device name (sda, sdb, ...)
       #    - <storage_device_name_with_hostname> : variable that will be the ID of the storage. It follows this
       #       pattern : "sda1.ecotype-48"
-      storage_device_name = storage_device[0]
+      storage_device_name = storage_device["device"]
       storage_device_name_with_hostname = "#{storage_device_name}.#{node[:name]}"
 
       # Retried the site propertie that corresponds to this storage device
@@ -851,9 +852,10 @@ def get_oar_properties_from_oar(options)
   return properties
 end
 
-def do_diff(options, generated_hierarchy)
+def do_diff(options, generated_hierarchy, data_hierarchy)
 
-  global_hash = load_data_hierarchy
+  # global_hash = load_data_hierarchy
+  global_hash = data_hierarchy
   properties = {}
   properties['ref'] = get_oar_properties_from_the_ref_repo(global_hash, options)
   properties['oar'] = get_oar_properties_from_oar(options)
@@ -1038,7 +1040,7 @@ oarnodesetting --sql "resource_id='#{corresponding_resource[0]["id"]}' AND type=
 end
 
 
-def extract_clusters_description(clusters, site_name, options, input_files_hierarchy, site_properties)
+def extract_clusters_description(clusters, site_name, options, data_hierarchy, site_properties)
 
   # This function works as follow:
   # (1) Initialization
@@ -1098,7 +1100,7 @@ def extract_clusters_description(clusters, site_name, options, input_files_hiera
 
     cluster_resources = site_resources.select{|r| r["cluster"] == cluster_name}
 
-    cluster_desc_from_input_files = input_files_hierarchy['sites'][site_name]['clusters'][cluster_name]
+    cluster_desc_from_input_files = data_hierarchy['sites'][site_name]['clusters'][cluster_name]
     first_node = cluster_desc_from_input_files['nodes'].first[1]
 
     # Some clusters such as graphite have a different organisation:
@@ -1406,19 +1408,18 @@ def generate_oar_properties(options)
   # 3) oar properties from the reference repository
   ############################################
 
-  input_files_hierarchy = load_yaml_file_hierarchy
+  data_hierarchy = load_data_hierarchy
 
   site_name = options[:site]
 
   # If no cluster is given, then the clusters are the cluster of the given site
   if not options.key? :clusters or options[:clusters].length == 0
-    clusters = input_files_hierarchy['sites'][site_name]['clusters'].keys
+    clusters = data_hierarchy['sites'][site_name]['clusters'].keys
     options[:clusters] = clusters
   else
     clusters = options[:clusters]
   end
 
-  data_hierarchy = load_data_hierarchy
 
   site_properties = get_oar_properties_from_the_ref_repo(data_hierarchy, {
       :sites => [site_name]
@@ -1431,7 +1432,7 @@ def generate_oar_properties(options)
   generated_hierarchy = extract_clusters_description(clusters,
                                                      site_name,
                                                      options,
-                                                     input_files_hierarchy,
+                                                     data_hierarchy,
                                                      site_properties)
 
   ############################################
@@ -1445,20 +1446,20 @@ def generate_oar_properties(options)
 
   # DO=print
   if options.key? :print and options[:print]
-    cmds = export_rows_as_oar_command(generated_hierarchy, site_name, site_properties)
+    cmds = export_rows_as_oar_command(generated_hierarchy, site_name, site_properties, data_hierarchy)
     puts(cmds)
   end
 
   # Do=Diff
   if options.key? :diff and options[:diff]
-    do_diff(options, generated_hierarchy)
+    do_diff(options, generated_hierarchy, data_hierarchy)
   end
 
   # Do=update
   if options[:update]
     printf 'Apply changes to the OAR server ' + options[:ssh][:host].gsub('%s', site_name) + ' ? (y/N) '
     prompt = STDIN.gets.chomp
-    cmds = export_rows_as_oar_command(generated_hierarchy, site_name, site_properties)
+    cmds = export_rows_as_oar_command(generated_hierarchy, site_name, site_properties, data_hierarchy)
     run_commands_via_ssh(cmds, options) if prompt.downcase == 'y'
   end
 
