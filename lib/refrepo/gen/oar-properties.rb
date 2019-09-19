@@ -1187,35 +1187,8 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
       phys_rsc_ids = variables[:current_ids]
       expected_phys_rsc_count = variables[:per_cluster_count]
 
-      if phys_rsc_ids.length > expected_phys_rsc_count
-        # Case 1
-        phys_rsc_ids = cluster_resources
-                      .map{|r| r[physical_resource]}
-                      .uniq
-                      .map{|rsc| {:count => cluster_resources.select{|r| r[physical_resource] == rsc}.length, :rsc => rsc}}
-                      .sort_by {|v| v[:count]}[-expected_phys_rsc_count..-1]
-                      .map{|tuple2| tuple2[:rsc]}
-                      .sort
-      elsif phys_rsc_ids.length < expected_phys_rsc_count
-        # Case 2
-        missing_resource_count = expected_phys_rsc_count - phys_rsc_ids.length
-        current_site_resource_ids = site_resources.map{|r| r[physical_resource]}.select{|x| not x.nil?}.uniq
-        unallocated_resources = (1..next_rsc_ids[physical_resource])
-                               .select{|rsc_id| not current_site_resource_ids.include?(rsc_id)}
-                               .select{|rsc_id| not newly_allocated_resources[physical_resource].include?(rsc_id)}
-        reallocated_resources = unallocated_resources[0..missing_resource_count]
-        newly_allocated_resources[physical_resource] += reallocated_resources
-        missing_resource_count -= reallocated_resources.length
-        if missing_resource_count > 0
-          new_resources = [*next_rsc_ids[physical_resource]+1..next_rsc_ids[physical_resource]+missing_resource_count]
-          newly_allocated_resources[physical_resource] += new_resources
-          next_rsc_ids[physical_resource] += missing_resource_count
-        else
-          new_resources = []
-        end
-        phys_rsc_ids = (phys_rsc_ids + reallocated_resources + new_resources)
-                      .uniq
-                      .sort
+      if phys_rsc_ids.length != expected_phys_rsc_count
+        raise "#{physical_resource} has an unexpected number of resources (current:#{phys_rsc_ids.length} vs expected:#{expected_phys_rsc_count})"
       end
 
       variables[:current_ids] = phys_rsc_ids
