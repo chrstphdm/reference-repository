@@ -1387,8 +1387,12 @@ def generate_oar_properties(options)
 
   # If no cluster is given, then the clusters are the cluster of the given site
   if not options.key? :clusters or options[:clusters].length == 0
-    clusters = data_hierarchy['sites'][site_name]['clusters'].keys
-    options[:clusters] = clusters
+    if data_hierarchy['sites'].key? site_name
+      clusters = data_hierarchy['sites'][site_name]['clusters'].keys
+      options[:clusters] = clusters
+    else
+      raise("The provided site does not exist : I can't detect clusters")
+    end
   else
     clusters = options[:clusters]
   end
