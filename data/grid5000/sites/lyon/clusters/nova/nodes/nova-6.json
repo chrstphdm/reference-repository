@@ -51,7 +51,7 @@
       "firmware_version": "0x800007f5",
       "interface": "Ethernet",
       "ip": "172.16.52.6",
-      "ip6": "fd0e:ebc6:bc7:400:5::6",
+      "ip6": "2001:660:4406:400:5::6",
       "kavlan": true,
       "mac": "a0:36:9f:ce:e4:30",
       "management": false,
