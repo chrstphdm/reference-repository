@@ -26,6 +26,7 @@ nodes:
               ambient: /MB/T_AMB  
     processor:
       microarchitecture: Nehalem
+    cpuset_mapping: round-robin
     performance:
       core_flops: 9170000000
       node_flops: 71150000000

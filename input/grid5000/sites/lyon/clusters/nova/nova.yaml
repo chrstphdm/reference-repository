@@ -11,6 +11,7 @@ nodes:
   nova-[1-23]:
     processor:
       microarchitecture: Broadwell
+    cpuset_mapping: round-robin
     performance:
       core_flops: 16120000000
       node_flops: 277800000000

@@ -11,6 +11,7 @@ nodes:
   ecotype-[1-48]:
     processor:
       microarchitecture: Broadwell
+    cpuset_mapping: round-robin
     performance:
       core_flops:  13180000000
       node_flops: 275300000000

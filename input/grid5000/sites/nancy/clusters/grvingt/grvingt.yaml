@@ -10,6 +10,7 @@ nodes:
   grvingt-[1-64]:
     processor:
       microarchitecture: Skylake
+    cpuset_mapping: round-robin
     performance:
       core_flops: 12770000000
       node_flops: 438800000000

@@ -36,6 +36,7 @@ nodes:
       other_description: AMD Opteron(tm) Processor 250
       vendor: AMD
       version: 250
+    cpuset_mapping: continuous
     performance:
       core_flops: 3929000000
       node_flops: 7440000000
