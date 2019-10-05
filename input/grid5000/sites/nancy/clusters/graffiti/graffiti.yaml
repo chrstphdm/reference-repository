@@ -9,7 +9,8 @@ nodes:
   graffiti-[1-13]:
     processor:
       microarchitecture: Skylake
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     supported_job_types:
        deploy: true
        besteffort: true

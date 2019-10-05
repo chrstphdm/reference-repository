@@ -10,7 +10,8 @@ nodes:
   parasilo-[1-28]:
     processor:
       microarchitecture: Haswell
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     performance:
       core_flops: 18720000000
       node_flops: 252800000000

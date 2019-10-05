@@ -13,7 +13,8 @@ nodes:
   grisou-[1-51]:
     processor:
       microarchitecture: Haswell
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     performance:
       core_flops: 15380000000
       node_flops: 256800000000

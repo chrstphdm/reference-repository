@@ -21,7 +21,8 @@ nodes:
         available: false
     processor:
       microarchitecture: Haswell
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     storage_devices:
       sda:
         interface: SATA

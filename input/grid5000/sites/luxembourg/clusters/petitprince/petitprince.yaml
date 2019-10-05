@@ -9,7 +9,8 @@ nodes:
   petitprince-[1-16]:
     processor:
       microarchitecture: Sandy Bridge
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     performance:
       node_flops: 130.6e+9
       core_flops: 12.14e+9

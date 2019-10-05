@@ -10,7 +10,8 @@ nodes:
   paravance-[1-72]:
     processor:
       microarchitecture: Haswell
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     performance:
       core_flops: 14600000000
       node_flops: 245300000000

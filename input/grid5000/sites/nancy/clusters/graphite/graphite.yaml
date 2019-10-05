@@ -16,7 +16,8 @@ nodes:
       node_flops: 187.90e+9
     processor:
       microarchitecture: Sandy Bridge
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     supported_job_types:
       deploy: true
       besteffort: true

@@ -12,7 +12,8 @@ nodes:
   graoully-[1-16]:
     processor:
       microarchitecture: Haswell
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     performance:
       core_flops: 15480000000
       node_flops: 250700000000

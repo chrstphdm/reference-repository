@@ -17,7 +17,8 @@ nodes:
       max_walltime: 0
     processor:
       microarchitecture: Zen
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     performance:
         core_flops: 12600000000
         node_flops: 380100000000

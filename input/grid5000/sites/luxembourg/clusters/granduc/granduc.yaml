@@ -9,7 +9,8 @@ nodes:
   granduc-[1-22]:
     processor:
       microarchitecture: Clovertown
-    cpuset_mapping: continuous
+    architecture:
+      cpu_core_numbering: continuous
     performance:
       node_flops: 44.07e+9
       core_flops: 6.409e+9

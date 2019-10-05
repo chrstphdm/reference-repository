@@ -10,7 +10,8 @@ nodes:
   parapluie-[1-40]:
     processor:
       microarchitecture: K10
-    cpuset_mapping: continuous
+    architecture:
+      cpu_core_numbering: continuous
     performance:
       core_flops: 4932000000
       node_flops: 121200000000

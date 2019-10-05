@@ -17,7 +17,8 @@ nodes:
       max_walltime: 0
     processor:
       microarchitecture: Broadwell
-    cpuset_mapping: round-robin
+    architecture:
+      cpu_core_numbering: round-robin
     performance:
         core_flops: 15690000000
         node_flops: 331400000000

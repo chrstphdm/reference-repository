@@ -9,7 +9,8 @@ nodes:
   grcinq-[1-48]:
     processor:
       microarchitecture: Sandy Bridge
-    cpuset_mapping: continuous
+    architecture:
+      cpu_core_numbering: continuous
     performance:
       core_flops: 11960000000
       node_flops: 201600000000
