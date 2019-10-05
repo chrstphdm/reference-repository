@@ -9,9 +9,6 @@ class MissingProperty < StandardError; end
 
 MiB = 1024**2
 
-# CPU distribution can be: round-robin | continuous
-DEFAULT_CPUSET_MAPPING = "continuous"
-
 # GPU distribution can be: round-robin | continuous
 DEFAULT_GPUSET_MAPPING = "continuous"
 
@@ -1071,7 +1068,7 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
     gpu_count = first_node.key?("gpu_devices") ? first_node["gpu_devices"].length : 0
 
     cpu_model = "#{first_node['processor']['model']} #{first_node['processor']['version']}"
-    cpuset_mapping = first_node.key?("cpuset_mapping") ? first_node["cpuset_mapping"] : DEFAULT_CPUSET_MAPPING
+    core_numbering = first_node['architecture']['cpu_core_numbering']
     # Detect how 'GPUSETs' are distributed over CPUs/GPUs of servers of this cluster
     gpuset_mapping = DEFAULT_GPUSET_MAPPING
 
@@ -1205,7 +1202,7 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
         gpu_idx += 1
       end
 
-      if cpuset_mapping == 'continuous'
+      if core_numbering == 'continuous'
         cpuset = 0
       end
 
@@ -1277,7 +1274,7 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
           ############################################
           # (2-d) Associate a cpuset to each core
           ############################################
-          if cpuset_mapping == 'continuous'
+          if core_numbering == 'continuous'
             row[:cpuset] = cpuset
           else
             # CPUSETs starts at 0
@@ -1309,7 +1306,7 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
 
           core_idx += 1
 
-          if cpuset_mapping == 'continuous'
+          if core_numbering == 'continuous'
             cpuset += 1
           end
 
