@@ -22,7 +22,7 @@ nodes:
       version: E5-2620
       microarchitecture: Sandy Bridge
     architecture:
-      cpu_core_numbering: continuous
+      cpu_core_numbering: contiguous
     performance:
         core_flops: 10170000000
         node_flops: 127100000000

@@ -10,7 +10,7 @@ nodes:
     processor:
       microarchitecture: Clovertown
     architecture:
-      cpu_core_numbering: continuous
+      cpu_core_numbering: contiguous
     performance:
       node_flops: 44.07e+9
       core_flops: 6.409e+9

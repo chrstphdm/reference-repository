@@ -37,7 +37,7 @@ nodes:
       vendor: AMD
       version: 250
     architecture:
-      cpu_core_numbering: continuous
+      cpu_core_numbering: contiguous
     performance:
       core_flops: 3929000000
       node_flops: 7440000000

@@ -11,7 +11,7 @@ nodes:
     processor:
       microarchitecture: Sandy Bridge
     architecture:
-      cpu_core_numbering: continuous
+      cpu_core_numbering: contiguous
     performance:
       core_flops: 14040000000
       node_flops: 207400000000
