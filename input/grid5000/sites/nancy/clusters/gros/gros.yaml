@@ -9,6 +9,8 @@ nodes:
   gros-[1-124]:
     processor:
       microarchitecture: Cascade Lake-SP
+    architecture:
+      cpu_core_numbering: contiguous
     supported_job_types:
        deploy: true
        besteffort: false

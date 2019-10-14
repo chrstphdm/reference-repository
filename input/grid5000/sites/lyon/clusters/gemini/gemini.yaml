@@ -28,6 +28,8 @@ nodes:
     kavlan: {}
     processor:
       microarchitecture: Broadwell
+    architecture:
+      cpu_core_numbering: contiguous
     network_adapters:
       bmc:
         interface: Ethernet
