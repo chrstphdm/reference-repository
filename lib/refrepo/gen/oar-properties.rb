@@ -1182,6 +1182,10 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
 
       node_description_default_properties = site_properties["default"][name]
 
+      if node_description.nil?
+        next
+      end
+
       # Detect GPU configuration of nodes
       if node_description.key? "gpu_devices"
         gpus = node_description["gpu_devices"]
