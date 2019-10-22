@@ -799,6 +799,7 @@ def get_oar_properties_from_oar(options)
 end
 
 def do_diff(options, generated_hierarchy, refrepo_properties)
+  ret = 0
 
   properties = {
     'ref' => refrepo_properties,
@@ -986,6 +987,8 @@ TXT
 
     end # if options[:diff]
   end
+
+  return ret
 end
 
 
@@ -1387,6 +1390,8 @@ def generate_oar_properties(options)
   # Output generated information
   ############################################
 
+  ret = 0
+
   # DO=table
   if options.key? :table and options[:table]
     export_rows_as_formated_line(generated_hierarchy)
@@ -1400,7 +1405,7 @@ def generate_oar_properties(options)
 
   # Do=Diff
   if options.key? :diff and options[:diff]
-    do_diff(options, generated_hierarchy, refrepo_properties)
+    ret = do_diff(options, generated_hierarchy, refrepo_properties)
   end
 
   # Do=update
@@ -1411,7 +1416,7 @@ def generate_oar_properties(options)
     run_commands_via_ssh(cmds, options) if prompt.downcase == 'y'
   end
 
-  return 0
+  return ret
 end
 
 end
