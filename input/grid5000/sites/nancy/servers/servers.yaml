@@ -61,6 +61,20 @@ srv-data:
           - uid: grisou-pdu2
             port: 20
 
+srv-data2:
+  kind: physical
+  warranty: 2026-07
+  serial: DKHBSY2
+  network_adapters:
+    default:
+      mounted: false
+      mac: 4C:D9:8F:6B:D5:66
+      ip: 172.16.79.17
+    bmc:
+      mounted: true
+      ip: 172.17.79.17
+      mac: 4C:D9:8F:6B:D5:60
+
 srv2:
   kind: physical
   alias: [ntp]
