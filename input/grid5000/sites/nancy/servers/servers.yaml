@@ -74,6 +74,22 @@ srv-data2:
       mounted: true
       ip: 172.17.79.17
       mac: 4C:D9:8F:6B:D5:60
+  monitoring:
+    wattmeter: multiple
+    metric: power
+  sensors:
+    network:
+      available: true
+      resolution: 1
+    power:
+      available: true
+      resolution: 1
+      via:
+        pdu:
+          - uid: gros-pdu7
+            port: 1
+          - uid: gros-pdu8
+            port: 1
 
 srv2:
   kind: physical
