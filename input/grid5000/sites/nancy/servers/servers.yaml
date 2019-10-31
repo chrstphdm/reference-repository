@@ -68,7 +68,7 @@ srv-data2:
   network_adapters:
     default:
       mounted: false
-      mac: 4C:D9:8F:6B:D5:66
+      mac: F8:F2:1E:69:64:A0
       ip: 172.16.79.17
     bmc:
       mounted: true
