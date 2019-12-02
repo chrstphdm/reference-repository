@@ -25,6 +25,7 @@ subnet <%= kavlan_ip.network %> netmask <%= kavlan_ip.netmask %> {
     option broadcast-address <%= kavlan_ip.broadcast %>;
     filename  "pxelinux.0";
     next-server <%= "kadeploy.#{site_uid}.grid5000.fr" %>;
+}
 
 <%
 refapi['sites'].sort.to_h.each_key do |site|
@@ -60,4 +61,3 @@ refapi['sites'].sort.to_h.each_key do |site|
   end
 end
 -%>
-}
