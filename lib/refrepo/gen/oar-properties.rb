@@ -599,7 +599,7 @@ end
 # Get all data from the OAR database
 def get_oar_data(site_uid, options)
   if options[:api][:uri] and not options[:api][:uri].include? "api.grid5000.fr"
-    api_uri = URI.parse(options[:api][:uri]+'/oarapi/resources/details.json?limit=999999')
+    api_uri = URI.parse(options[:api][:uri]+'/stable/sites/'+ site_uid + '/internal/oarapi/resources/details.json?limit=999999')
   else
     api_uri = URI.parse('https://api.grid5000.fr/stable/sites/' + site_uid  + '/internal/oarapi/resources/details.json?limit=999999')
   end
