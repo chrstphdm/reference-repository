@@ -222,7 +222,7 @@ oarnodesetting -a -h 'clustera-2.fakesite.grid5000.fr' -p host='clustera-2.fakes
 oarnodesetting -a -h 'clustera-2.fakesite.grid5000.fr' -p host='clustera-2.fakesite.grid5000.fr' -p cpu=4 -p core=32 -p cpuset=15 -p gpu=8 -p gpu_model='GeForce RTX 2080 Ti' -p gpudevice=3 # This GPU is mapped on /dev/nvidia3
 TXT
       expected_clustera3_cmds = <<-TXT
-oarnodesetting --sql "host='clustera-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clustera' -p nodemodel='Dell PowerEdge T640' -p switch='gw-fakesite' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=0
+oarnodesetting --sql "host='clustera-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clustera' -p nodemodel='Dell PowerEdge T640' -p switch='gw-fakesite' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=0
 TXT
 
       generator_output = capture do
@@ -281,7 +281,6 @@ TXT
     ["+", "myri_count", 0]
     ["+", "myri_rate", 0]
     ["+", "nodemodel", "Dell PowerEdge T640"]
-    ["+", "opa", "NO"]
     ["+", "opa_count", 0]
     ["+", "opa_rate", 0]
     ["+", "production", "YES"]
@@ -318,7 +317,6 @@ TXT
     ["+", "myri_count", 0]
     ["+", "myri_rate", 0]
     ["+", "nodemodel", "Dell PowerEdge T640"]
-    ["+", "opa", "NO"]
     ["+", "opa_count", 0]
     ["+", "opa_rate", 0]
     ["+", "production", "YES"]
@@ -443,7 +441,7 @@ oarnodesetting --sql "host='clustera-2.fakesite.grid5000.fr' AND resource_id='21
 TXT
 
       expected_clustera3_cmds = <<-TXT
-oarnodesetting --sql "host='clustera-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clustera' -p nodemodel='Dell PowerEdge T640' -p switch='gw-fakesite' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=0
+oarnodesetting --sql "host='clustera-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clustera' -p nodemodel='Dell PowerEdge T640' -p switch='gw-fakesite' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=0
 TXT
 
       generator_output = capture do
@@ -650,7 +648,7 @@ oarnodesetting -a -h 'clustera-2.fakesite.grid5000.fr' -p host='clustera-2.fakes
 oarnodesetting -a -h 'clustera-2.fakesite.grid5000.fr' -p host='clustera-2.fakesite.grid5000.fr' -p cpu=4 -p core=32 -p cpuset=15 -p gpu=8 -p gpu_model='GeForce RTX 2080 Ti' -p gpudevice=3 # This GPU is mapped on /dev/nvidia3
       TXT
       expected_clustera3_cmds = <<-TXT
-oarnodesetting --sql "host='clustera-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clustera' -p nodemodel='Dell PowerEdge T640' -p switch='gw-fakesite' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=0
+oarnodesetting --sql "host='clustera-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clustera' -p nodemodel='Dell PowerEdge T640' -p switch='gw-fakesite' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=0
       TXT
 
       generator_output = capture do
@@ -709,7 +707,6 @@ oarnodesetting --sql "host='clustera-2.fakesite.grid5000.fr' and type='default'"
     ["+", "myri_count", 0]
     ["+", "myri_rate", 0]
     ["+", "nodemodel", "Dell PowerEdge T640"]
-    ["+", "opa", "NO"]
     ["+", "opa_count", 0]
     ["+", "opa_rate", 0]
     ["+", "production", "YES"]
@@ -746,7 +743,6 @@ oarnodesetting --sql "host='clustera-2.fakesite.grid5000.fr' and type='default'"
     ["+", "myri_count", 0]
     ["+", "myri_rate", 0]
     ["+", "nodemodel", "Dell PowerEdge T640"]
-    ["+", "opa", "NO"]
     ["+", "opa_count", 0]
     ["+", "opa_rate", 0]
     ["+", "production", "YES"]
@@ -872,7 +868,7 @@ oarnodesetting -a -h 'clusterb-2.fakesite.grid5000.fr' -p host='clusterb-2.fakes
 TXT
 
       expected_clusterb3_cmds = <<-TXT
-oarnodesetting --sql "host='clusterb-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterb' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
+oarnodesetting --sql "host='clusterb-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterb' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
 TXT
 
       expected_clusterb4_cmds = <<-TXT
@@ -942,7 +938,6 @@ TXT
     ["+", "myri_count", 0]
     ["+", "myri_rate", 0]
     ["+", "nodemodel", "Dell PowerEdge T640"]
-    ["+", "opa", "NO"]
     ["+", "opa_count", 0]
     ["+", "opa_rate", 0]
     ["+", "production", "YES"]
@@ -979,7 +974,6 @@ TXT
     ["+", "myri_count", 0]
     ["+", "myri_rate", 0]
     ["+", "nodemodel", "Dell PowerEdge T640"]
-    ["+", "opa", "NO"]
     ["+", "opa_count", 0]
     ["+", "opa_rate", 0]
     ["+", "production", "YES"]
@@ -1187,7 +1181,7 @@ oarnodesetting --sql "host='clusterb-2.fakesite.grid5000.fr' AND resource_id='35
 TXT
 
       expected_clusterb3_cmds = <<-TXT
-oarnodesetting --sql "host='clusterb-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterb' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
+oarnodesetting --sql "host='clusterb-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterb' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
 TXT
 
       generator_output = capture do
@@ -1348,7 +1342,7 @@ oarnodesetting -a -h 'clusterc-2.fakesite.grid5000.fr' -p host='clusterc-2.fakes
 oarnodesetting -a -h 'clusterc-2.fakesite.grid5000.fr' -p host='clusterc-2.fakesite.grid5000.fr' -p cpu=4 -p core=32 -p cpuset=15
 TXT
       expected_clusterc3_cmds = <<-TXT
-oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterc' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=0 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
+oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterc' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=0 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
 TXT
 
 
@@ -1408,7 +1402,6 @@ TXT
     ["+", "myri_count", 0]
     ["+", "myri_rate", 0]
     ["+", "nodemodel", "Dell PowerEdge T640"]
-    ["+", "opa", "NO"]
     ["+", "opa_count", 0]
     ["+", "opa_rate", 0]
     ["+", "production", "YES"]
@@ -1445,7 +1438,6 @@ TXT
     ["+", "myri_count", 0]
     ["+", "myri_rate", 0]
     ["+", "nodemodel", "Dell PowerEdge T640"]
-    ["+", "opa", "NO"]
     ["+", "opa_count", 0]
     ["+", "opa_rate", 0]
     ["+", "production", "YES"]
@@ -1563,7 +1555,7 @@ oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' AND resource_id='34
 oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' AND resource_id='35' AND type='default'" -p cpu=4 -p core=32 -p cpuset=15
 TXT
       expected_clusterc3_cmds = <<-TXT
-oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterc' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=0 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
+oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterc' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=0 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
 TXT
 
       generator_output = capture do
@@ -1718,7 +1710,7 @@ oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' AND resource_id='34
 oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' AND resource_id='35' AND type='default'" -p cpu=4 -p core=32 -p cpuset=15
 TXT
       expected_clusterc3_cmds = <<-TXT
-oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterc' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=0 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
+oarnodesetting --sql "host='clusterc-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterc' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=0 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
 TXT
 
       generator_output = capture do
@@ -2132,7 +2124,6 @@ Properties that need to be created on the fakesite server: ib_rate
       "ib": "NO",
       "opa_count": 0,
       "opa_rate": 0,
-      "opa": "NO",
       "myri_count": 0,
       "myri_rate": 0,
       "myri": "NO",
@@ -2387,11 +2378,11 @@ CORE has an unexpected number of resources (current:31 vs expected:32).
       }
 
       expected_output = <<-TXT
-oarnodesetting --sql "host='clusterb-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterb' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
+oarnodesetting --sql "host='clusterb-2.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.2' -p cluster='clusterb' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
       TXT
 
       expected_output2 = <<-TXT
-oarnodesetting --sql "host='clusterb-1.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.1' -p cluster='clusterb' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p opa='NO' -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
+oarnodesetting --sql "host='clusterb-1.fakesite.grid5000.fr' and type='default'" -p ip='172.16.64.1' -p cluster='clusterb' -p nodemodel='Dell PowerEdge T640' -p besteffort='YES' -p virtual='ivt' -p cpuarch='x86_64' -p cpucore=8 -p cputype='Intel Xeon Silver 4110' -p cpufreq='2.1' -p disktype='SATA' -p eth_count=1 -p eth_rate=10 -p ib_count=0 -p ib_rate=0 -p ib='NO' -p opa_count=0 -p opa_rate=0 -p myri_count=0 -p myri_rate=0 -p myri='NO' -p memcore=8192 -p memcpu=65536 -p memnode=131072 -p gpu_count=4 -p mic='NO' -p wattmeter='MULTIPLE' -p cluster_priority=201906 -p max_walltime=86400 -p production='YES' -p maintenance='NO' -p disk_reservation_count=3
       TXT
 
       expected_output3 = <<-TXT
