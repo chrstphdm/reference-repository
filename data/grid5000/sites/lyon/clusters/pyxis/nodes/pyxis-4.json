@@ -10,7 +10,7 @@
       "enabled": true,
       "ip": "172.16.54.4",
       "kavlan": false,
-      "mac": "b4:2e:99:3d:1e:dd",
+      "mac": "b4:2e:99:3d:1e:dc",
       "mountable": true,
       "mounted": true,
       "network_address": "pyxis-4.lyon.grid5000.fr",
