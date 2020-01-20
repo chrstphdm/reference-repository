@@ -37,7 +37,6 @@ def capture(&_block)
   result
 end
 
-
 def str_block_to_regexp(str)
   str1 = str.gsub("|", "\\\\|")
   str2 = str1.gsub("+", "\\\\+")
@@ -1946,8 +1945,12 @@ Output format: [ '-', 'key', 'value'] for missing, [ '+', 'key', 'value'] for ad
     ["~", "eth_rate", "10", 10]
       TXT
 
-      expected_output2 = <<-TXT
+      expected_output2a = <<-TXT
 Error: the OAR property 'eth_rate' is a 'String' on the fakesite server and this script uses 'Fixnum' for this property.
+      TXT
+
+      expected_output2b = <<-TXT
+Error: the OAR property 'eth_rate' is a 'String' on the fakesite server and this script uses 'Integer' for this property.
       TXT
 
       generator_output = capture do
@@ -1955,7 +1958,7 @@ Error: the OAR property 'eth_rate' is a 'String' on the fakesite server and this
       end
 
       expect(generator_output[:stdout]).to include(expected_output)
-      expect(generator_output[:stdout]).to include(expected_output2)
+      expect(generator_output[:stdout]).to include(expected_output2a).or include(expected_output2b)
     end
   end
 
@@ -2470,6 +2473,390 @@ echo; echo 'Adding disk sdb.clusterb-2 on host clusterb-1.fakesite.grid5000.fr:'
 
       expect(generator_output[:stdout]).to include(expected_clustera1_diff)
       expect(generator_output[:stdout]).to include(expected_clustera2_diff)
+    end
+  end
+
+  context 'Computing cpusets associated to numa nodes' do
+    before do
+      #prepare_stubs("dump_oar_api_configured_server.json", "load_data_hierarchy_stubbed_data_bad_best_effort_property.json")
+    end
+
+    it 'should generate correctly a cpuset mappping with (round-robin, 1 numa node per CPU)' do
+
+      numa_packages = generate_numa_packages("round-robin", 2, 2 * 4, nb_numa_nodes_per_cpu=1)
+      ordered_cpusets = get_cpusets(numa_packages)
+
+      expected_numa_packages = {
+          1 => {
+              :numa_nodes => {
+                  0 => {
+                      :cores => [0, 2, 4, 6]
+                  }
+              }
+          },
+          2 => {
+              :numa_nodes => {
+                  1 => {
+                      :cores => [1, 3, 5, 7]
+                  }
+              }
+          }
+      }
+
+      expect(ordered_cpusets).to eq([0, 2, 4, 6, 1, 3, 5, 7])
+      expect(numa_packages).to eq(expected_numa_packages)
+    end
+
+    it 'should generate correctly a cpuset mappping with (contiguous, 1 numa node per CPU)' do
+
+      numa_packages = generate_numa_packages("contiguous", 2, 2 * 4, nb_numa_nodes_per_cpu=1)
+      ordered_cpusets = get_cpusets(numa_packages)
+
+      expected_numa_packages = {
+          1 => {
+              :numa_nodes => {
+                  0 => {
+                      :cores => [0, 1, 2, 3]
+                  }
+              }
+          },
+          2 => {
+              :numa_nodes => {
+                  1 => {
+                      :cores => [4, 5, 6, 7]
+                  }
+              }
+          }
+      }
+
+      expect(ordered_cpusets).to eq([0, 1, 2, 3, 4, 5, 6, 7])
+      expect(numa_packages).to eq(expected_numa_packages)
+    end
+
+    it 'should generate correctly a cpuset mappping with (round-robin, 2 numa node per CPU)' do
+
+      numa_packages = generate_numa_packages("round-robin", 2, 4 * 4, nb_numa_nodes_per_cpu=2)
+      ordered_cpusets = get_cpusets(numa_packages)
+
+      expected_numa_packages = {
+          1 => {
+              :numa_nodes => {
+                  0 => {
+                      :cores => [0, 4, 8, 12]
+                  },
+                  1 => {
+                      :cores => [2, 6, 10, 14]
+                  }
+              }
+          },
+          2 => {
+              :numa_nodes => {
+                  2 => {
+                      :cores => [1, 5, 9, 13]
+                  },
+                  3 => {
+                      :cores => [3, 7, 11, 15]
+                  }
+              }
+          }
+      }
+
+      expect(ordered_cpusets).to eq([0, 4, 8, 12, 2, 6, 10, 14, 1, 5, 9, 13, 3, 7, 11, 15])
+      expect(numa_packages).to eq(expected_numa_packages)
+    end
+
+    it 'should generate correctly a cpuset mappping with (contiguous, 2 numa node per CPU)' do
+
+      numa_packages = generate_numa_packages("contiguous", 2, 4 * 4, nb_numa_nodes_per_cpu=2)
+      ordered_cpusets = get_cpusets(numa_packages)
+
+      expected_numa_packages = {
+          1 => {
+              :numa_nodes => {
+                  0 => {
+                      :cores => [0, 1, 2, 3]
+                  },
+                  1 => {
+                      :cores => [4, 5, 6, 7]
+                  }
+              }
+          },
+          2 => {
+              :numa_nodes => {
+                  2 => {
+                      :cores => [8, 9, 10, 11]
+                  },
+                  3 => {
+                      :cores => [12, 13, 14, 15]
+                  }
+              }
+          }
+      }
+
+      expect(ordered_cpusets).to eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+      expect(numa_packages).to eq(expected_numa_packages)
+    end
+
+    it 'should generate correctly a cpuset mappping for grue nodes (round-robin, 4 numa nodes per CPU, 2 cpus per node, 32 cores per node)' do
+
+      numa_packages = generate_numa_packages("round-robin", 2, 32, nb_numa_nodes_per_cpu=4)
+      ordered_cpusets = get_cpusets(numa_packages)
+
+      expected_numa_packages = {
+          1 => {
+              :numa_nodes => {
+                  0 => {
+                      :cores => [0, 8, 16, 24]
+                  },
+                  1 => {
+                      :cores => [2, 10, 18, 26]
+                  },
+                  2 => {
+                      :cores => [4, 12, 20, 28]
+                  },
+                  3 => {
+                      :cores => [6, 14, 22, 30]
+                  }
+              }
+          },
+          2 => {
+              :numa_nodes => {
+                  4 => {
+                      :cores => [1, 9, 17, 25]
+                  },
+                  5 => {
+                      :cores => [3, 11, 19, 27]
+                  },
+                  6 => {
+                      :cores => [5, 13, 21, 29]
+                  },
+                  7 => {
+                      :cores => [7, 15, 23, 31]
+                  }
+              }
+          }
+      }
+
+      expect(ordered_cpusets).to eq([0, 8, 16, 24, 2, 10, 18, 26, 4, 12, 20, 28, 6, 14, 22, 30, 1, 9, 17, 25, 3, 11, 19, 27, 5, 13, 21, 29, 7, 15, 23, 31])
+      expect(numa_packages).to eq(expected_numa_packages)
+    end
+
+    it 'should associtate correctly gpus to numa nodes of "grue" nodes (ignore_unassociated_cores=false)' do
+
+      gpu_mapping = {
+          "nvidia0" => {
+              "cpu_affinity" => 2
+          },
+          "nvidia1" => {
+              "cpu_affinity" => 3
+          },
+          "nvidia2" => {
+              "cpu_affinity" => 4
+          },
+          "nvidia3" => {
+              "cpu_affinity" => 6
+          },
+      }
+
+      numa_packages = generate_numa_packages("round-robin", 2, 32, nb_numa_nodes_per_cpu=4)
+      ordered_cpusets = get_cpusets(numa_packages)
+      associate_gpu_to_numa_packages(numa_packages, gpu_mapping, ignore_unassociated_cores=false)
+      ordered_gpus = get_gpus(numa_packages)
+      ordered_gpus_contiguous = get_gpus_contiguous(numa_packages)
+
+      expected_numa_packages = {
+          1 => {
+              :numa_nodes => {
+                  0 => {
+                      :cores => [0, 8, 16, 24],
+                      :associated_gpus => ["nvidia0"]
+                  },
+                  1 => {
+                      :cores => [2, 10, 18, 26],
+                      :associated_gpus => ["nvidia1"]
+                  },
+                  2 => {
+                      :cores => [4, 12, 20, 28],
+                      :associated_gpus => ["nvidia0"]
+                  },
+                  3 => {
+                      :cores => [6, 14, 22, 30],
+                      :associated_gpus => ["nvidia1"]
+                  }
+              }
+          },
+          2 => {
+              :numa_nodes => {
+                  4 => {
+                      :cores => [1, 9, 17, 25],
+                      :associated_gpus => ["nvidia2"]
+                  },
+                  5 => {
+                      :cores => [3, 11, 19, 27],
+                      :associated_gpus => ["nvidia2"]
+                  },
+                  6 => {
+                      :cores => [5, 13, 21, 29],
+                      :associated_gpus => ["nvidia3"]
+                  },
+                  7 => {
+                      :cores => [7, 15, 23, 31],
+                      :associated_gpus => ["nvidia3"]
+                  }
+              }
+          }
+      }
+
+      expect(ordered_cpusets).to eq([0, 8, 16, 24, 2, 10, 18, 26, 4, 12, 20, 28, 6, 14, 22, 30, 1, 9, 17, 25, 3, 11, 19, 27, 5, 13, 21, 29, 7, 15, 23, 31])
+      expect(numa_packages).to eq(expected_numa_packages)
+      expect(ordered_gpus).to eq(["nvidia0", "nvidia0", "nvidia0", "nvidia0",
+                                  "nvidia1", "nvidia1", "nvidia1", "nvidia1",
+                                  "nvidia0", "nvidia0", "nvidia0", "nvidia0",
+                                  "nvidia1", "nvidia1", "nvidia1", "nvidia1",
+                                  "nvidia2", "nvidia2", "nvidia2", "nvidia2",
+                                  "nvidia2", "nvidia2", "nvidia2", "nvidia2",
+                                  "nvidia3", "nvidia3", "nvidia3", "nvidia3",
+                                  "nvidia3", "nvidia3", "nvidia3", "nvidia3",])
+    end
+
+    it 'should associtate correctly gpus to numa nodes of "grue" nodes (ignore_unassociated_cores=true)' do
+
+      gpu_mapping = {
+          "nvidia0" => {
+              "cpu_affinity" => 2
+          },
+          "nvidia1" => {
+              "cpu_affinity" => 3
+          },
+          "nvidia2" => {
+              "cpu_affinity" => 4
+          },
+          "nvidia3" => {
+              "cpu_affinity" => 6
+          },
+      }
+
+      numa_packages = generate_numa_packages("round-robin", 2, 32, nb_numa_nodes_per_cpu=4)
+      ordered_cpusets = get_cpusets(numa_packages)
+      associate_gpu_to_numa_packages(numa_packages, gpu_mapping=gpu_mapping, ignore_unassociated_cores=true)
+      ordered_gpus = get_gpus(numa_packages)
+      ordered_gpus_contiguous = get_gpus_contiguous(numa_packages)
+
+      expected_numa_packages = {
+          1 => {
+              :numa_nodes => {
+                  0 => {
+                      :cores => [0, 8, 16, 24],
+                      :associated_gpus => []
+                  },
+                  1 => {
+                      :cores => [2, 10, 18, 26],
+                      :associated_gpus => []
+                  },
+                  2 => {
+                      :cores => [4, 12, 20, 28],
+                      :associated_gpus => ["nvidia0"]
+                  },
+                  3 => {
+                      :cores => [6, 14, 22, 30],
+                      :associated_gpus => ["nvidia1"]
+                  }
+              }
+          },
+          2 => {
+              :numa_nodes => {
+                  4 => {
+                      :cores => [1, 9, 17, 25],
+                      :associated_gpus => ["nvidia2"]
+                  },
+                  5 => {
+                      :cores => [3, 11, 19, 27],
+                      :associated_gpus => []
+                  },
+                  6 => {
+                      :cores => [5, 13, 21, 29],
+                      :associated_gpus => ["nvidia3"]
+                  },
+                  7 => {
+                      :cores => [7, 15, 23, 31],
+                      :associated_gpus => []
+                  }
+              }
+          }
+      }
+
+      expect(ordered_cpusets).to eq([0, 8, 16, 24, 2, 10, 18, 26, 4, 12, 20, 28, 6, 14, 22, 30, 1, 9, 17, 25, 3, 11, 19, 27, 5, 13, 21, 29, 7, 15, 23, 31])
+      expect(numa_packages).to eq(expected_numa_packages)
+      expect(ordered_gpus).to eq([nil, nil, nil, nil,
+                                  nil, nil, nil, nil,
+                                  "nvidia0", "nvidia0", "nvidia0", "nvidia0",
+                                  "nvidia1", "nvidia1", "nvidia1", "nvidia1",
+                                  "nvidia2", "nvidia2", "nvidia2", "nvidia2",
+                                  nil, nil, nil, nil,
+                                  "nvidia3", "nvidia3", "nvidia3", "nvidia3",
+                                  nil, nil, nil, nil])
+      expect(ordered_gpus_contiguous).to eq([nil, nil, nil, nil,
+                                  nil, nil, nil, nil,
+                                  "nvidia0", "nvidia0", "nvidia0", "nvidia0",
+                                  "nvidia1", "nvidia1", "nvidia1", "nvidia1",
+                                  "nvidia2", "nvidia2", "nvidia2", "nvidia2",
+                                  nil, nil, nil, nil,
+                                  "nvidia3", "nvidia3", "nvidia3", "nvidia3",
+                                  nil, nil, nil, nil])
+    end
+
+    it 'should associtate correctly gpus to numa nodes (multiple gpus)' do
+
+      gpu_mapping = {
+          "nvidia0" => {
+              "cpu_affinity" => 0
+          },
+          "nvidia1" => {
+              "cpu_affinity" => 0
+          },
+          "nvidia2" => {
+              "cpu_affinity" => 1
+          },
+          "nvidia3" => {
+              "cpu_affinity" => 1
+          },
+      }
+
+      numa_packages = generate_numa_packages("round-robin", 2, 16, nb_numa_nodes_per_cpu=1)
+      ordered_cpusets = get_cpusets(numa_packages)
+      associate_gpu_to_numa_packages(numa_packages, gpu_mapping=gpu_mapping, ignore_unassociated_cores=true)
+      ordered_gpus = get_gpus(numa_packages)
+      ordered_gpus_contiguous = get_gpus_contiguous(numa_packages)
+
+      expected_numa_packages = {
+          1 => {
+              :numa_nodes => {
+                  0 => {
+                      :cores => [0, 2, 4, 6, 8, 10, 12, 14],
+                      :associated_gpus => ["nvidia0", "nvidia1"]
+                  },
+              }
+          },
+          2 => {
+              :numa_nodes => {
+                  1 => {
+                      :cores => [1, 3, 5, 7, 9, 11, 13, 15],
+                      :associated_gpus => ["nvidia2", "nvidia3"]
+                  },
+              }
+          }
+      }
+
+      expect(ordered_cpusets).to eq([0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15])
+      expect(numa_packages).to eq(expected_numa_packages)
+      expect(ordered_gpus).to eq(["nvidia0", "nvidia1", "nvidia0", "nvidia1",
+                                  "nvidia0", "nvidia1", "nvidia0", "nvidia1",
+                                  "nvidia2", "nvidia3", "nvidia2", "nvidia3",
+                                  "nvidia2", "nvidia3", "nvidia2", "nvidia3"])
+      expect(ordered_gpus_contiguous).to eq(["nvidia0", "nvidia0", "nvidia0", "nvidia0",
+                                  "nvidia1", "nvidia1", "nvidia1", "nvidia1",
+                                  "nvidia2", "nvidia2", "nvidia2", "nvidia2",
+                                  "nvidia3", "nvidia3", "nvidia3", "nvidia3"])
     end
   end
 
