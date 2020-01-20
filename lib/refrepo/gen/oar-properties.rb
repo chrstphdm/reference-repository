@@ -1139,6 +1139,181 @@ def sanity_check(cluster_resources, site_resources)
 end
 
 
+def populate_round_robin(numa_data_structure, core_per_numa_node)
+  # Create an ordered list of numa nodes
+  numa_nodes_per_cpu = numa_data_structure[1][:numa_nodes].length
+  numa_nodes = []
+  (1..numa_nodes_per_cpu).each do |local_numa_node_index|
+    local_numa_node_index0 = local_numa_node_index - 1
+    numa_data_structure.each do |cpu_num, cpu_hash|
+      key_numa_node = cpu_hash[:numa_nodes].keys.sort[local_numa_node_index0]
+      numa_node_hash = cpu_hash[:numa_nodes][key_numa_node]
+      numa_nodes.push(numa_node_hash)
+    end
+  end
+  # Add cpusets to numa nodes
+   core_id = 0
+  (1..core_per_numa_node).each do |core_idx|
+    numa_nodes.each do |numa_node|
+      numa_node[:cores].push(core_id)
+      core_id += 1
+    end
+  end
+
+  return numa_data_structure
+end
+
+def populate_contiguous(numa_data_structure, core_per_numa_node)
+  core_id = 0
+  numa_data_structure.each do |cpu_num, cpu_hash|
+    cpu_hash[:numa_nodes].each do |numa_node_num, numa_hash|
+      (1..core_per_numa_node).each do |core_idx|
+        numa_hash[:cores].push(core_id)
+        core_id += 1
+      end
+    end
+  end
+  return numa_data_structure
+end
+
+def generate_numa_packages(core_numbering_policy, nb_cpus, nb_cores, nb_numa_nodes_per_cpu=1, manual_mapping=nil)
+  numa_data_structure = {}
+
+  numa_node_index = {}
+
+  # Prepare NUMA data structure
+  numa_id = 0
+  (1..nb_cpus).each do |cpu_num|
+    numa_data_structure[cpu_num] =  {
+        :numa_nodes => {}
+    }
+    (1..nb_numa_nodes_per_cpu).each do |nb_numa_nodes_per_cpu|
+      numa_node = {
+          :cores => [],
+      }
+      numa_data_structure[cpu_num][:numa_nodes][numa_id] = numa_node
+      numa_node_index[numa_id] = numa_node
+      numa_id += 1
+    end
+  end
+
+  core_per_numa_node = nb_cores / (nb_cpus * nb_numa_nodes_per_cpu)
+
+  if core_numbering_policy == "contiguous"
+    numa_data_structure = populate_contiguous(numa_data_structure, core_per_numa_node)
+  elsif core_numbering_policy == "round-robin"
+    numa_data_structure = populate_round_robin(numa_data_structure, core_per_numa_node)
+  else
+    raise "Could not understand what core numbering policy you are using ('#{core_numbering_policy}')"
+  end
+
+  #cpusets = []
+  #
+  #numa_data_structure.each do |cpu_num, cpu_hash|
+  #  cpu_hash[:numa_nodes].each do |numa_node_num, numa_hash|
+  #    cpusets.push(*numa_hash[:cores])
+  #  end
+  #end
+
+  return numa_data_structure
+end
+
+def get_cpusets(numa_data_structure)
+  cpusets = []
+
+  numa_data_structure.each do |cpu_num, cpu_hash|
+    cpu_hash[:numa_nodes].each do |numa_node_num, numa_hash|
+      cpusets.push(*numa_hash[:cores])
+    end
+  end
+
+  return cpusets
+end
+
+def get_gpus(numa_data_structure)
+  gpus = []
+
+  numa_data_structure.each do |cpu_num, cpu_hash|
+    cpu_hash[:numa_nodes].each do |numa_node_num, numa_hash|
+      gpu_idx = 0
+      numa_hash[:cores].each do |core|
+        gpu = nil
+        if numa_hash.key?(:associated_gpus) and numa_hash[:associated_gpus].size > 0
+          gpu = numa_hash[:associated_gpus][gpu_idx % numa_hash[:associated_gpus].size]
+        end
+        gpus.push(gpu)
+        gpu_idx += 1
+      end
+    end
+  end
+
+  return gpus
+end
+
+def get_gpus_contiguous(numa_data_structure)
+  gpus = []
+
+  numa_data_structure.each do |cpu_num, cpu_hash|
+    cpu_hash[:numa_nodes].each do |numa_node_num, numa_hash|
+      numas_gpus = numa_hash[:associated_gpus]
+      if not numa_hash.key?(:associated_gpus) or numa_hash[:associated_gpus].size == 0
+        numas_gpus = [nil]
+      end
+      cores_per_gpu = numa_hash[:cores].size / numas_gpus.size
+      numas_gpus.each do |gpu|
+        gpus.push(*([gpu] * cores_per_gpu))
+      end
+    end
+  end
+
+  return gpus
+end
+
+def associate_gpu_to_numa_packages(numa_data_structure, gpu_mapping={}, ignore_unassociated_cores=false)
+  if not gpu_mapping.nil?
+    # Associate GPUs to their numa nodes
+    gpu_mapping.each do |gpu_name, gpu_associated_numa|
+      numa_node_target = gpu_associated_numa["cpu_affinity"]
+      numa_data_structure.each do |cpu, cpu_hash|
+        cpu_hash[:numa_nodes].each do |numa_num, numa_node|
+          if not numa_node.key?(:associated_gpus)
+            numa_node[:associated_gpus] = []
+          end
+          if numa_num == numa_node_target
+            numa_node[:associated_gpus].push(gpu_name)
+          end
+        end
+      end
+    end
+    # Expand GPUs to numa nodes that don't have a GPU
+    if not ignore_unassociated_cores
+      all_gpus = gpu_mapping.keys()
+      gpu_mapping.each do |gpu_name, gpu_associated_numa|
+        numa_data_structure.each do |cpu, cpu_hash|
+          gpu_associated_to_this_cpu = cpu_hash[:numa_nodes]
+                                           .map{|k, v| v}
+                                           .select{|numa_node| numa_node.key?(:associated_gpus) and numa_node[:associated_gpus].size > 0}
+                                           .map{|v| v[:associated_gpus]}
+                                           .flatten
+          gpu_index = 0
+          cpu_hash[:numa_nodes].each do |numa_num, numa_node|
+            if numa_node[:associated_gpus].size == 0
+              if gpu_associated_to_this_cpu.size > 0
+                numa_node[:associated_gpus].push(gpu_associated_to_this_cpu[gpu_index % gpu_associated_to_this_cpu.size])
+              elsif all_gpus.size > 0
+                numa_node[:associated_gpus].push(all_gpus[gpu_index % all_gpus.size])
+              end
+              gpu_index += 1
+            end
+          end
+        end
+      end
+    end
+  end
+
+  return numa_data_structure
+end
+
 def extract_clusters_description(clusters, site_name, options, data_hierarchy, site_properties)
 
   # This function works as follow:
@@ -1223,7 +1398,9 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
 
     cpu_count = first_node['architecture']['nb_procs']
     core_count = first_node['architecture']['nb_cores'] / cpu_count
-    gpu_count = first_node.key?("gpu_devices") ? first_node["gpu_devices"].length : 0
+    gpu_mapping = first_node.key?("gpu_devices") ? first_node["gpu_devices"] : {}
+    gpu_count = gpu_mapping.length
+    nb_numa_nodes_per_cpu = first_node.key?("nb_numa_nodes_per_cpu") ? first_node["nb_numa_nodes_per_cpu"].length : 1
 
     cpu_model = "#{first_node['processor']['model']} #{first_node['processor']['version']}"
     core_numbering = first_node['architecture']['cpu_core_numbering']
@@ -1300,6 +1477,12 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
       nodes_names = cluster_resources.map{|r| r["host"]}.map{|fqdn| {:fqdn => fqdn, :name => fqdn.split(".")[0]}}.uniq
     end
 
+    numa_packages = generate_numa_packages(core_numbering, cpu_count, core_count * cpu_count, nb_numa_nodes_per_cpu=nb_numa_nodes_per_cpu)
+    associate_gpu_to_numa_packages(numa_packages, gpu_mapping=gpu_mapping, ignore_unassociated_cores=true)
+    ordered_cpusets = get_cpusets(numa_packages)
+    #ordered_gpus = get_gpus(numa_packages)
+    ordered_gpus = get_gpus_contiguous(numa_packages)
+
     ############################################
     # Suite of (2-a): Iterate over nodes of the cluster. (rest: cpus, cores)
     ############################################
@@ -1333,10 +1516,6 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
       gpus.map do |v|
         v[1]['local_id'] = gpu_idx
         gpu_idx += 1
-      end
-
-      if core_numbering == 'contiguous'
-        cpuset = 0
       end
 
       generated_node_description = {
@@ -1409,25 +1588,23 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
           ############################################
           # (2-d) Associate a cpuset to each core
           ############################################
-          if core_numbering == 'contiguous'
-            row[:cpuset] = cpuset
-          else
-            # CPUSETs starts at 0
-            row[:cpuset] = cpu_index0 + core_index0 * phys_rsc_map["cpu"][:per_server_count]
-          end
-
+          row[:cpuset] = ordered_cpusets[core_index0 + cpu_index0 * core_count]
           row[:cpumodel] = cpu_model
 
           ############################################
           # (2-e) [if cluster with GPU] Associate a gpuset to each core
           ############################################
           if not numa_gpus.empty?
-            gpu_idx = core_index0 / (phys_rsc_map["core"][:per_server_count] / numa_gpus.length)
+            gpu_idx = ordered_gpus[core_index0 + cpu_index0 * core_count]
+            selected_gpu_device = gpu_mapping[gpu_idx]["device"]
 
-            selected_gpu = numa_gpus[gpu_idx]
-            if selected_gpu.nil?
+            selected_gpus = numa_gpus.select{|gpu| gpu["device"] == selected_gpu_device}
+
+            if selected_gpus.size == 0
               next
             end
+
+            selected_gpu = selected_gpus[0]
 
             row[:gpu] = phys_rsc_map["gpu"][:current_ids][node_index0 * phys_rsc_map["gpu"][:per_server_count] + selected_gpu['local_id']]
             row[:gpudevice] = selected_gpu['local_id']
@@ -1436,11 +1613,6 @@ def extract_clusters_description(clusters, site_name, options, data_hierarchy, s
           end
 
           core_idx += 1
-
-          if core_numbering == 'contiguous'
-            cpuset += 1
-          end
-
           generated_node_description[:oar_rows].push(row)
         end
         cpu_idx += 1
@@ -1514,8 +1686,9 @@ def generate_oar_properties(options)
                                                        options,
                                                        data_hierarchy,
                                                        refrepo_properties[site_name])
-  rescue
+  rescue => exception
     print("A problem occured while building the clusters description. Generator is exiting.")
+    puts exception.backtrace
     return 1
   end
 
