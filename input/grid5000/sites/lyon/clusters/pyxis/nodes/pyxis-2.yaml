@@ -80,6 +80,7 @@ pyxis-2:
     model: ThunderX2
     vendor: Cavium
     version: 99xx
+    other_description: ThunderX2 99xx
   storage_devices:
     sda:
       by_id: "/dev/disk/by-id/wwn-0x5002538e40c53daf"
