@@ -1,7 +1,7 @@
 ---
 model: R181-T92-00
 created_at: 2020-01-06
-kavlan: false
+kavlan: true
 queues:
   - admin
   - testing
@@ -20,7 +20,6 @@ nodes:
       bmc:
         interface: Ethernet
         enabled: true
-        management: true
         mounted: false
         mountable: false
       eth0:
@@ -31,14 +30,20 @@ nodes:
         enabled: false
         mountable: false
         mounted: false
+      eth2:
+        enabled: false
+        mountable: false
+        mounted: false
+      eth3:
+        enabled: false
+        mountable: false
+        mounted: false
     storage_devices:
       sda:
         interface: SAS
         driver: megaraid_sas
         storage: HDD
-        model: Samsung SSD 860 EVO 250GB
       sdb:
         interface: SAS
         driver: megaraid_sas
         storage: HDD
-        model: Samsung SSD 860 EVO 250GB
