@@ -17,6 +17,27 @@
     "name": "R181-T92-00",
     "serial": "GJG5N9812A0008"
   },
+  "kavlan": {
+    "eth0": {
+      "kavlan-1": "192.168.198.3",
+      "kavlan-11": "10.7.206.3",
+      "kavlan-12": "10.11.206.3",
+      "kavlan-13": "10.15.206.3",
+      "kavlan-14": "10.19.206.3",
+      "kavlan-16": "10.27.206.3",
+      "kavlan-18": "10.35.206.3",
+      "kavlan-2": "192.168.214.3",
+      "kavlan-20": "10.43.206.3",
+      "kavlan-21": "10.47.206.3",
+      "kavlan-3": "192.168.230.3",
+      "kavlan-4": "10.12.6.3",
+      "kavlan-5": "10.12.70.3",
+      "kavlan-6": "10.12.134.3",
+      "kavlan-7": "10.12.198.3",
+      "kavlan-8": "10.13.6.3",
+      "kavlan-9": "10.13.70.3"
+    }
+  },
   "main_memory": {
     "ram_size": 274877906944
   },
@@ -31,7 +52,7 @@
       "firmware_version": "mfw 8.35.24.0 storm 8.37.2.0",
       "interface": "Ethernet",
       "ip": "172.16.54.3",
-      "kavlan": false,
+      "kavlan": true,
       "mac": "b4:2e:99:3d:1e:d0",
       "management": false,
       "model": "FastLinQ QL41000 Series 10/25/40/50GbE Controller",

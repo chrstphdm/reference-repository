@@ -1,6 +1,6 @@
 {
   "created_at": "Mon, 06 Jan 2020 00:00:00 GMT",
-  "kavlan": false,
+  "kavlan": true,
   "model": "R181-T92-00",
   "queues": [
     "admin",

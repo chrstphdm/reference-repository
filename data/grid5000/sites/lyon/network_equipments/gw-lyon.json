@@ -22,12 +22,24 @@
           "uid": "gemini-2"
         },
         {
+          "kind": "node",
+          "port": "eth0",
+          "uid": "pyxis-1"
         },
         {
+          "kind": "node",
+          "port": "eth0",
+          "uid": "pyxis-2"
         },
         {
+          "kind": "node",
+          "port": "eth0",
+          "uid": "pyxis-3"
         },
         {
+          "kind": "node",
+          "port": "eth0",
+          "uid": "pyxis-4"
         },
         {
         },
