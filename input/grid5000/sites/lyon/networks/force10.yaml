@@ -78,12 +78,6 @@ force10:
         45: nova-21
         46: nova-22
         47: nova-23
-        48:
-          uid: castor
-          kind: other
-        49:
-          uid: pollux
-          kind: other
         50:
           uid: procyon
           kind: other

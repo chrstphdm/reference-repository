@@ -242,14 +242,8 @@
           "uid": "nova-23"
         },
         {
-          "kind": "other",
-          "port": "eth0",
-          "uid": "castor"
         },
         {
-          "kind": "other",
-          "port": "eth0",
-          "uid": "pollux"
         },
         {
           "kind": "other",
