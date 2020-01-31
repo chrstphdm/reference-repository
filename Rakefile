@@ -127,6 +127,30 @@ namespace :gen do
     exit(ret)
   end
 
+  desc "Run default environment generator"
+  task "default-environment" do
+    require 'refrepo/gen/default-environment'
+    options = {}
+    options[:sites] = ( ENV['SITE'] ? ENV['SITE'].split(',') : G5K_SITES )
+    options[:diff] = false
+    options[:print] = false
+    options[:update] = false
+
+    if ENV['DO']
+      ENV['DO'].split(',').each do |t|
+        options[:diff] = true if t == 'diff'
+        options[:print] = true if t == 'print'
+        options[:update] = true if t == 'update'
+      end
+    else
+      puts "You must specify something to do using DO="
+      exit(1)
+    end
+
+    ret = RefRepo::Gen::DefaultEnv::gen(options)
+    exit(ret)
+  end
+
   desc "Generate OAR properties -- parameters: SITE=grenoble CLUSTER={yeti,...} DO={print,table,update,diff} [VERBOSE={0,1,2,3}] [OAR_SERVER=192.168.37.10] [OAR_SERVER_USER=g5kadmin]"
   task "oar-properties" do
     # Manage oar-properties for a given set of Grid'5000 cluster. The task takes the following parameters

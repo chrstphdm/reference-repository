@@ -84,6 +84,8 @@ GEM
     mutant-rspec (0.8.24)
       mutant (~> 0.8.24)
       rspec-core (>= 3.4.0, < 4.0.0)
+    net-scp (2.0.0)
+      net-ssh (>= 2.6.5, < 6.0.0)
     net-ssh (4.2.0)
     net-ssh-gateway (2.0.0)
       net-ssh (>= 4.0.0)
@@ -190,6 +192,7 @@ DEPENDENCIES
   hashdiff
   mediawiki_api
   mutant-rspec
+  net-scp
   net-ssh
   peach
   restfully
@@ -197,3 +200,6 @@ DEPENDENCIES
   ruby-cute
   simplecov
   webmock
+
+BUNDLED WITH
+   1.17.2
