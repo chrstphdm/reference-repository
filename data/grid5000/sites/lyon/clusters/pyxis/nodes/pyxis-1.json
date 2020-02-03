@@ -153,6 +153,9 @@
   },
   "sensors": {
   },
+  "software": {
+    "standard-environment": "debian10-arm64-std"
+  },
   "storage_devices": [
     {
       "by_id": "/dev/disk/by-id/wwn-0x5002538e40c53de0",
