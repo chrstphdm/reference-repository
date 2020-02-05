@@ -69,18 +69,17 @@ pyxis-4:
     pstate_governor: performance
     turboboost_enabled: false
   processor:
-    cache_l1d: 0
-    cache_l1i: 0
-    cache_l2: 0
-    cache_l3: 0
-    clock_speed: 0
+    cache_l1d: 32768
+    cache_l1i: 32768
+    cache_l2: 262144
+    cache_l3: 33554432
     ht_capable: false
     instruction_set: aarch64
     microcode: unknown
     model: ThunderX2
+    other_description: ThunderX2 99xx
     vendor: Cavium
     version: 99xx
-    other_description: ThunderX2 99xx
   storage_devices:
     sda:
       by_id: "/dev/disk/by-id/wwn-0x5002538e40c53dea"
@@ -94,3 +93,5 @@ pyxis-4:
       firmware_version: RVT02B6Q
       model: Samsung SSD 860
       size: 250059350016
+  supported_job_types:
+    virtual: arm64

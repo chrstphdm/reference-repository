@@ -137,11 +137,10 @@
   },
   "processor": {
     "cache_l1": null,
-    "cache_l1d": 0,
-    "cache_l1i": 0,
-    "cache_l2": 0,
-    "cache_l3": 0,
-    "clock_speed": 0,
+    "cache_l1d": 32768,
+    "cache_l1i": 32768,
+    "cache_l2": 262144,
+    "cache_l3": 33554432,
     "ht_capable": false,
     "instruction_set": "aarch64",
     "microarchitecture": "Vulcan",
@@ -189,7 +188,8 @@
     "queues": [
       "admin",
       "testing"
-    ]
+    ],
+    "virtual": "arm64"
   },
   "type": "node",
   "uid": "pyxis-1"
