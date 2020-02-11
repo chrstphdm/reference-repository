@@ -152,6 +152,24 @@
     "version": "99xx"
   },
   "sensors": {
+    "power": {
+      "available": true,
+      "per_outlets": true,
+      "via": {
+        "api": {
+          "metric": "power"
+        },
+        "pdu": [
+          {
+            "port": 25,
+            "uid": "wattmetre1"
+          }
+        ],
+        "www": {
+          "url": "http://wattmetre.lyon.grid5000.fr/GetWatts-json.php"
+        }
+      }
+    }
   },
   "software": {
     "standard-environment": "debian10-arm64-std"
