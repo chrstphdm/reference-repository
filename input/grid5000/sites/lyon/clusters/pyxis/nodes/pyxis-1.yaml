@@ -11,7 +11,7 @@ pyxis-1:
     release_date: 10/25/2019
     vendor: GIGABYTE
     version: F27
-  bmc_version: unknown
+  bmc_version: '1.95'
   chassis:
     manufacturer: GIGABYTE
     name: R181-T92-00
@@ -43,24 +43,6 @@ pyxis-1:
       model: FastLinQ QL41000 Series 10/25/40/50GbE Controller
       name: eno2
       vendor: QLogic Corp.
-    eth2:
-      driver: mlx5_core
-      firmware_version: 16.25.6000 (MT_0000000012)
-      interface: Ethernet
-      mac: b8:59:9f:c1:f4:c2
-      management: false
-      model: MT27800 Family [ConnectX-5]
-      name: enp145s0f0
-      vendor: Mellanox Technologies
-    eth3:
-      driver: mlx5_core
-      firmware_version: 16.25.6000 (MT_0000000012)
-      interface: Ethernet
-      mac: b8:59:9f:c1:f4:c3
-      management: false
-      model: MT27800 Family [ConnectX-5]
-      name: enp145s0f1
-      vendor: Mellanox Technologies
   operating_system:
     cstate_driver: none
     cstate_governor: menu

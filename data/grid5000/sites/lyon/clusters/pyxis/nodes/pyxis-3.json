@@ -11,7 +11,7 @@
     "vendor": "GIGABYTE",
     "version": "F27"
   },
-  "bmc_version": "unknown",
+  "bmc_version": "1.95",
   "chassis": {
     "manufacturer": "GIGABYTE",
     "name": "R181-T92-00",
@@ -79,36 +79,6 @@
       "mounted": false,
       "name": "eno2",
       "vendor": "QLogic Corp."
-    },
-    {
-      "device": "eth2",
-      "driver": "mlx5_core",
-      "enabled": false,
-      "firmware_version": "16.25.6000 (MT_0000000012)",
-      "interface": "Ethernet",
-      "kavlan": false,
-      "mac": "b8:59:9f:c1:f3:ea",
-      "management": false,
-      "model": "MT27800 Family [ConnectX-5]",
-      "mountable": false,
-      "mounted": false,
-      "name": "enp145s0f0",
-      "vendor": "Mellanox Technologies"
-    },
-    {
-      "device": "eth3",
-      "driver": "mlx5_core",
-      "enabled": false,
-      "firmware_version": "16.25.6000 (MT_0000000012)",
-      "interface": "Ethernet",
-      "kavlan": false,
-      "mac": "b8:59:9f:c1:f3:eb",
-      "management": false,
-      "model": "MT27800 Family [ConnectX-5]",
-      "mountable": false,
-      "mounted": false,
-      "name": "enp145s0f1",
-      "vendor": "Mellanox Technologies"
     },
     {
       "device": "bmc",
