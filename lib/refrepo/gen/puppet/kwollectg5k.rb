@@ -36,10 +36,10 @@ def generate_puppet_kwollectg5k(options)
     }
 
     # Metrics configuration for network device
-    site['network_equipments'].each { |netdev_uid, netdev|
+    site['network_equipments'].each { |neteq_uid, neteq|
 
-      output = ERB.new(File.read(File.expand_path('templates/kwollect-netdevice.erb', File.dirname(__FILE__))), nil, '-').result(binding)
-      output_file = Pathname("#{options[:output_dir]}//platforms/production/modules/generated/files/grid5000/kwollect/#{site_uid}/#{netdev_uid}.conf")
+      output = ERB.new(File.read(File.expand_path('templates/kwollect-network.erb', File.dirname(__FILE__))), nil, '-').result(binding)
+      output_file = Pathname("#{options[:output_dir]}//platforms/production/modules/generated/files/grid5000/kwollect/#{site_uid}/#{neteq_uid}.conf")
       output_file.dirname.mkpath()
       File.write(output_file, output)
     }

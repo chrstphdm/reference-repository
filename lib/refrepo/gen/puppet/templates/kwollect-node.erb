@@ -6,7 +6,7 @@
 <%-
 cluster.fetch('metrics', []).each {|metric|
   next if metric['source']['protocol'] == "wattmetre"
-  next if metric['source']['protocol'] == "netdevice"
+  next if metric['source']['protocol'] == "network_equipment"
 
   if metric['source']['protocol'] == "ipmisensor"
     auth = ipmi_credentials+"@"
