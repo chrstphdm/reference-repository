@@ -60,3 +60,14 @@ nodes:
         storage: HDD
         #model: PERC H330 Mini
         reservation: true
+    monitoring:
+      wattmeter: true
+    sensors:
+      power:
+        available: true
+        per_outlets: true
+        via:
+          api:
+            metric: power
+          www:
+            url: http://wattmetre.nancy.grid5000.fr/GetWatts-json.php
