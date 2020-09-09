@@ -60,8 +60,6 @@ nodes:
         storage: HDD
         #model: PERC H330 Mini
         reservation: true
-    monitoring:
-      wattmeter: true
     sensors:
       power:
         available: true

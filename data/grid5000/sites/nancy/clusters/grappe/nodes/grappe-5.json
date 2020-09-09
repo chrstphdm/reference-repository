@@ -64,7 +64,7 @@
     "ram_size": 103079215104
   },
   "monitoring": {
-    "wattmeter": "true"
+    "wattmeter": "multiple"
   },
   "network_adapters": [
     {
