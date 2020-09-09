@@ -214,11 +214,11 @@
         },
         "pdu": [
           {
-            "port": 2,
+            "port": 4,
             "uid": "grappe-pdu1"
           },
           {
-            "port": 2,
+            "port": 4,
             "uid": "grappe-pdu2"
           }
         ],
